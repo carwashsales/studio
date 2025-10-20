@@ -1,3 +1,4 @@
+
 import {
   Card,
   CardContent,
@@ -45,7 +46,7 @@ export default function InventoryPage() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <CardTitle className="font-headline">Inventory</CardTitle>
             <CardDescription>
@@ -88,10 +89,10 @@ export default function InventoryPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Item Name</TableHead>
-              <TableHead>Category</TableHead>
+              <TableHead className="hidden md:table-cell">Category</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Quantity</TableHead>
-              <TableHead>Location</TableHead>
+              <TableHead className="text-right md:text-left">Quantity</TableHead>
+              <TableHead className="hidden md:table-cell">Location</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
               </TableHead>
@@ -101,10 +102,10 @@ export default function InventoryPage() {
             {inventoryItems.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.name}</TableCell>
-                <TableCell>{item.category}</TableCell>
+                <TableCell className="hidden md:table-cell">{item.category}</TableCell>
                 <TableCell>{getStatusBadge(item.quantity)}</TableCell>
-                <TableCell>{item.quantity}</TableCell>
-                <TableCell>{item.location}</TableCell>
+                <TableCell className="text-right md:text-left">{item.quantity}</TableCell>
+                <TableCell className="hidden md:table-cell">{item.location}</TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
