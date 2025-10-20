@@ -1,4 +1,5 @@
 
+"use client";
 import {
   Card,
   CardContent,
@@ -27,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { inventoryItems } from "@/lib/data";
 import { MoreHorizontal, PlusCircle, ListFilter } from "lucide-react";
+import * as React from "react";
 
 const getStatusBadge = (quantity: number) => {
   if (quantity === 0) {
@@ -91,7 +93,7 @@ export default function InventoryPage() {
               <TableHead>Item Name</TableHead>
               <TableHead className="hidden md:table-cell">Category</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right md:text-left">Quantity</TableHead>
+              <TableHead className="text-right">Quantity</TableHead>
               <TableHead className="hidden md:table-cell">Location</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
@@ -104,7 +106,7 @@ export default function InventoryPage() {
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell className="hidden md:table-cell">{item.category}</TableCell>
                 <TableCell>{getStatusBadge(item.quantity)}</TableCell>
-                <TableCell className="text-right md:text-left">{item.quantity}</TableCell>
+                <TableCell className="text-right">{item.quantity}</TableCell>
                 <TableCell className="hidden md:table-cell">{item.location}</TableCell>
                 <TableCell>
                   <DropdownMenu>

@@ -1,3 +1,5 @@
+
+"use client";
 import {
   Card,
   CardContent,
@@ -24,6 +26,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import * as React from "react";
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -44,7 +47,7 @@ export default function OrdersPage() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <CardTitle className="font-headline">Orders</CardTitle>
             <CardDescription>
@@ -64,9 +67,9 @@ export default function OrdersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Order ID</TableHead>
-              <TableHead>Supplier</TableHead>
+              <TableHead className="hidden sm:table-cell">Supplier</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
+              <TableHead className="hidden md:table-cell">Date</TableHead>
               <TableHead className="text-right">Total</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
@@ -77,13 +80,13 @@ export default function OrdersPage() {
             {orders.map((order) => (
               <TableRow key={order.id}>
                 <TableCell className="font-medium">{order.id}</TableCell>
-                <TableCell>{order.supplier}</TableCell>
+                <TableCell className="hidden sm:table-cell">{order.supplier}</TableCell>
                 <TableCell>{getStatusBadge(order.status)}</TableCell>
-                <TableCell>{order.date}</TableCell>
+                <TableCell className="hidden md:table-cell">{order.date}</TableCell>
                 <TableCell className="text-right">
                   ${order.total.toFixed(2)}
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button aria-haspopup="true" size="icon" variant="ghost">

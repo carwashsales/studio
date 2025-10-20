@@ -1,3 +1,5 @@
+
+"use client";
 import {
   Card,
   CardContent,
@@ -24,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { sales, services } from "@/lib/data";
+import * as React from "react";
 
 export default function SalesPage() {
   return (
@@ -82,7 +85,7 @@ export default function SalesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Service</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead className="hidden sm:table-cell">Date</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                 </TableRow>
               </TableHeader>
@@ -90,7 +93,7 @@ export default function SalesPage() {
                 {sales.map((sale) => (
                   <TableRow key={sale.id}>
                     <TableCell className="font-medium">{sale.service}</TableCell>
-                    <TableCell>{sale.date}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{sale.date}</TableCell>
                     <TableCell className="text-right">
                       ${sale.amount.toFixed(2)}
                     </TableCell>

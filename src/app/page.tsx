@@ -41,7 +41,7 @@ const chartConfig = {
 
 export default function Dashboard() {
   return (
-    <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-4 md:gap-8 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Value</CardTitle>
@@ -139,9 +139,9 @@ export default function Dashboard() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Activity</TableHead>
-                  <TableHead>Item/Service</TableHead>
+                  <TableHead className="hidden sm:table-cell">Item/Service</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead className="hidden md:table-cell">Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -150,7 +150,7 @@ export default function Dashboard() {
                     <TableCell className="font-medium">
                       {activity.activity}
                     </TableCell>
-                    <TableCell>{activity.item}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{activity.item}</TableCell>
                     <TableCell>
                       <Badge
                         variant={
@@ -165,7 +165,7 @@ export default function Dashboard() {
                         {activity.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{activity.date}</TableCell>
+                    <TableCell className="hidden md:table-cell">{activity.date}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

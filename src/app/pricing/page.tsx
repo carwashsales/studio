@@ -1,3 +1,5 @@
+
+"use client";
 import {
   Card,
   CardContent,
@@ -23,12 +25,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import * as React from "react";
 
 export default function PricingPage() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <CardTitle className="font-headline">Service Pricing</CardTitle>
             <CardDescription>
@@ -48,7 +51,7 @@ export default function PricingPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Service Name</TableHead>
-              <TableHead>Description</TableHead>
+              <TableHead className="hidden sm:table-cell">Description</TableHead>
               <TableHead className="text-right">Price</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
@@ -59,7 +62,7 @@ export default function PricingPage() {
             {services.map((service) => (
               <TableRow key={service.id}>
                 <TableCell className="font-medium">{service.name}</TableCell>
-                <TableCell>{service.description}</TableCell>
+                <TableCell className="hidden sm:table-cell">{service.description}</TableCell>
                 <TableCell className="text-right">
                   ${service.price.toFixed(2)}
                 </TableCell>
