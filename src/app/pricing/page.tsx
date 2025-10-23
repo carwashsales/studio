@@ -28,6 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { seedDefaultServices } from '@/lib/services';
 import { Check, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 
 const EditableCell = ({ value, onSave, isEditable = true }: { value: number; onSave: (newValue: number) => void, isEditable?: boolean }) => {
