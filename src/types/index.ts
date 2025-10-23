@@ -1,3 +1,4 @@
+
 export type InventoryItem = {
     id: string;
     name: string;
@@ -14,7 +15,7 @@ export type Order = {
     total: number;
 };
 
-export type Sale = {
+export type CarWashSale = {
     id: string;
     service: string;
     date: string;
