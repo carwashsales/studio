@@ -110,15 +110,24 @@ export const SERVICE_TYPES = {
 export async function seedDefaultServices(db: Firestore) {
   const servicesCollection = collection(db, 'services');
   const snapshot = await getDocs(servicesCollection);
+  const existingServiceIds = snapshot.docs.map(doc => doc.id);
+  const defaultServiceIds = Object.keys(SERVICE_TYPES);
 
-  if (snapshot.empty) {
-    console.log('No services found, seeding default services...');
+  const missingServiceIds = defaultServiceIds.filter(id => !existingServiceIds.includes(id));
+
+  if (missingServiceIds.length > 0) {
+    console.log('Missing services found, seeding them now...');
     const batch = writeBatch(db);
-    Object.entries(SERVICE_TYPES).forEach(([id, serviceData]) => {
-      const docRef = doc(servicesCollection, id);
-      batch.set(docRef, serviceData);
+    missingServiceIds.forEach((id) => {
+      const serviceData = (SERVICE_TYPES as any)[id];
+      if (serviceData) {
+        const docRef = doc(servicesCollection, id);
+        batch.set(docRef, serviceData);
+      }
     });
     await batch.commit();
-    console.log('Default services have been seeded.');
+    console.log('Missing default services have been seeded.');
+  } else {
+    console.log('All default services already exist in Firestore.');
   }
 }
