@@ -33,7 +33,7 @@ import type { InventoryItem, CarWashSale, Order } from '@/types';
 import { format } from 'date-fns';
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { SarIcon } from '@/components/ui/sar-icon';
+import Image from 'next/image';
 
 const chartConfig = {
   sales: {
@@ -98,10 +98,10 @@ export default function Dashboard() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-          <SarIcon className="h-4 w-4 text-muted-foreground" />
+          <Image src="/sar.png" alt="SAR" width={16} height={16} className="text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold flex items-center">{totalInventoryValue.toFixed(2)} <SarIcon className="h-6 w-6 ml-1" /></div>
+          <div className="text-2xl font-bold flex items-center">{totalInventoryValue.toFixed(2)} <Image src="/sar.png" alt="SAR" width={24} height={24} className="ml-1" /></div>
           <p className="text-xs text-muted-foreground">
             Estimated value of all items
           </p>
@@ -206,7 +206,7 @@ export default function Dashboard() {
                       {format(new Date(activity.date), 'PPP')}
                     </TableCell>
                     <TableCell className="text-right flex justify-end items-center">
-                      {activity.amount.toFixed(2)} <SarIcon className="h-4 w-4 ml-1" />
+                      {activity.amount.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
                     </TableCell>
                   </TableRow>
                 ))}

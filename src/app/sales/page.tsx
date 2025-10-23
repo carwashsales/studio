@@ -30,7 +30,7 @@ import { collection } from 'firebase/firestore';
 import type { CarWashSale, Price } from '@/types';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
-import { SarIcon } from '@/components/ui/sar-icon';
+import Image from 'next/image';
 
 export default function SalesPage() {
   const { user, isUserLoading } = useUser();
@@ -126,7 +126,7 @@ export default function SalesPage() {
                 <Label htmlFor="price">Total Price</Label>
                 <div className="relative">
                   <Input id="price" type="number" placeholder="0.00" value={totalPrice} readOnly className="pl-7" />
-                  <SarIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Image src="/sar.png" alt="SAR" width={16} height={16} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 </div>
               </div>
               <Button type="submit" className="w-full bg-accent hover:bg-accent/90">
@@ -163,7 +163,7 @@ export default function SalesPage() {
                       {format(new Date(sale.date), 'PPP')}
                     </TableCell>
                     <TableCell className="text-right flex justify-end items-center">
-                      {sale.amount.toFixed(2)} <SarIcon className="h-4 w-4 ml-1" />
+                      {sale.amount.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
                     </TableCell>
                   </TableRow>
                 ))}

@@ -31,7 +31,6 @@ import { collection } from "firebase/firestore";
 import type { InventoryItem, Order, CarWashSale } from "@/types";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
-import { SarIcon } from "@/components/ui/sar-icon";
 
 
 const usageChartConfig = {
