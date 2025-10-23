@@ -27,8 +27,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, PlusCircle, ListFilter } from 'lucide-react';
 import * as React from 'react';
-import { useCollection, useFirestore, useMemoFirebase, useUser, addDocumentNonBlocking } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 import type { InventoryItem } from '@/types';
 import {
   Dialog,
@@ -42,6 +42,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/use-toast';
 
 const getStatusBadge = (quantity: number) => {
   if (quantity === 0) {
@@ -68,86 +69,90 @@ const getStatusBadge = (quantity: number) => {
   );
 };
 
-function AddItemDialog() {
+function ItemDialog({ mode, item, children }: { mode: 'add' | 'edit', item?: InventoryItem, children: React.ReactNode }) {
   const firestore = useFirestore();
   const inventoryCollection = useMemoFirebase(
     () => (firestore ? collection(firestore, 'inventory') : null),
     [firestore]
   );
-  const [name, setName] = React.useState('');
-  const [category, setCategory] = React.useState('');
-  const [quantity, setQuantity] = React.useState(0);
-  const [location, setLocation] = React.useState('');
+  const { toast } = useToast();
+
+  const [name, setName] = React.useState(item?.name || '');
+  const [category, setCategory] = React.useState(item?.category || '');
+  const [quantity, setQuantity] = React.useState(item?.quantity || 0);
+  const [location, setLocation] = React.useState(item?.location || '');
   const [open, setOpen] = React.useState(false);
+  
+  React.useEffect(() => {
+    if (open && item) {
+      setName(item.name);
+      setCategory(item.category);
+      setQuantity(item.quantity);
+      setLocation(item.location);
+    } else if (!open) {
+      // Reset form on close
+      setName('');
+      setCategory('');
+      setQuantity(0);
+      setLocation('');
+    }
+  }, [open, item]);
 
   const handleSubmit = () => {
-    if (!inventoryCollection) return;
-    const newItem: Omit<InventoryItem, 'id'> = {
-      name,
-      category,
-      quantity,
-      location,
-    };
-    addDocumentNonBlocking(inventoryCollection, newItem);
+    if (!firestore) return;
+    if (mode === 'add') {
+        if (!inventoryCollection) return;
+        const newItem: Omit<InventoryItem, 'id'> = { name, category, quantity, location };
+        addDocumentNonBlocking(inventoryCollection, newItem);
+        toast({ title: "Item Added", description: `${name} has been added to the inventory.`});
+    } else if (mode === 'edit' && item) {
+        const itemRef = doc(firestore, 'inventory', item.id);
+        const updatedItem: Partial<InventoryItem> = { name, category, quantity, location };
+        setDocumentNonBlocking(itemRef, updatedItem, { merge: true });
+        toast({ title: "Item Updated", description: `${name} has been updated.`});
+    }
     setOpen(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="h-8 gap-1">
-          <PlusCircle className="h-3.5 w-3.5" />
-          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-            Add Item
-          </span>
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add New Inventory Item</DialogTitle>
+          <DialogTitle>{mode === 'add' ? 'Add New Inventory Item' : 'Edit Inventory Item'}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
-            </Label>
+            <Label htmlFor="name" className="text-right">Name</Label>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="category" className="text-right">
-              Category
-            </Label>
+            <Label htmlFor="category" className="text-right">Category</Label>
             <Input id="category" value={category} onChange={(e) => setCategory(e.target.value)} className="col-span-3" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="quantity" className="text-right">
-              Quantity
-            </Label>
+            <Label htmlFor="quantity" className="text-right">Quantity</Label>
             <Input id="quantity" type="number" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} className="col-span-3" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="location" className="text-right">
-              Location
-            </Label>
+            <Label htmlFor="location" className="text-right">Location</Label>
             <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} className="col-span-3" />
           </div>
         </div>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
-          <Button onClick={handleSubmit}>Add Item</Button>
+          <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+          <Button onClick={handleSubmit}>{mode === 'add' ? 'Add Item' : 'Save Changes'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-
 export default function InventoryPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
+  const { toast } = useToast();
 
   React.useEffect(() => {
     if (!isUserLoading && !user) {
@@ -162,6 +167,13 @@ export default function InventoryPage() {
   const { data: inventoryItems, isLoading } =
     useCollection<InventoryItem>(inventoryCollection);
     
+  const handleDelete = (itemId: string, itemName: string) => {
+    if (!firestore) return;
+    const itemRef = doc(firestore, 'inventory', itemId);
+    deleteDocumentNonBlocking(itemRef);
+    toast({ variant: "destructive", title: "Item Deleted", description: `${itemName} has been removed from the inventory.`});
+  };
+
   if (isUserLoading || !user) {
     return <div>Loading...</div>;
   }
@@ -198,7 +210,14 @@ export default function InventoryPage() {
                 </DropdownMenuCheckboxItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <AddItemDialog />
+            <ItemDialog mode="add">
+              <Button size="sm" className="h-8 gap-1">
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-rap">
+                  Add Item
+                </span>
+              </Button>
+            </ItemDialog>
           </div>
         </div>
       </CardHeader>
@@ -239,8 +258,10 @@ export default function InventoryPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
-                      <DropdownMenuItem>Delete</DropdownMenuItem>
+                      <ItemDialog mode="edit" item={item}>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>
+                      </ItemDialog>
+                      <DropdownMenuItem onClick={() => handleDelete(item.id, item.name)}>Delete</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
