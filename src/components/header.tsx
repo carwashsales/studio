@@ -21,6 +21,7 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter } from 'next/navigation';
+import { SarIcon } from "./ui/sar-icon";
 
 export default function Header() {
   const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar-1');

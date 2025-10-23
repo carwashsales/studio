@@ -30,6 +30,7 @@ import { collection } from 'firebase/firestore';
 import type { CarWashSale, Price } from '@/types';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
+import { SarIcon } from '@/components/ui/sar-icon';
 
 export default function SalesPage() {
   const { user, isUserLoading } = useUser();
@@ -123,7 +124,10 @@ export default function SalesPage() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="price">Total Price</Label>
-                <Input id="price" type="number" placeholder="$0.00" value={totalPrice} readOnly />
+                <div className="relative">
+                  <Input id="price" type="number" placeholder="0.00" value={totalPrice} readOnly className="pl-7" />
+                  <SarIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                </div>
               </div>
               <Button type="submit" className="w-full bg-accent hover:bg-accent/90">
                 Add Sale
@@ -158,8 +162,8 @@ export default function SalesPage() {
                     <TableCell className="hidden sm:table-cell">
                       {format(new Date(sale.date), 'PPP')}
                     </TableCell>
-                    <TableCell className="text-right">
-                      ${sale.amount.toFixed(2)}
+                    <TableCell className="text-right flex justify-end items-center">
+                      {sale.amount.toFixed(2)} <SarIcon className="h-4 w-4 ml-1" />
                     </TableCell>
                   </TableRow>
                 ))}

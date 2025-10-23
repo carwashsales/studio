@@ -31,6 +31,7 @@ import { collection } from "firebase/firestore";
 import type { InventoryItem, Order, CarWashSale } from "@/types";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
+import { SarIcon } from "@/components/ui/sar-icon";
 
 
 const usageChartConfig = {
@@ -142,7 +143,7 @@ export default function ReportsPage() {
             <LineChart data={costData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" tickLine={false} axisLine={false} />
-              <YAxis tickFormatter={(val) => `$${val}`} tickLine={false} axisLine={false} />
+              <YAxis tickFormatter={(val) => `${val}`} tickLine={false} axisLine={false} />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Line
                 type="monotone"

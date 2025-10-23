@@ -23,7 +23,6 @@ import {
 } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import {
-  DollarSign,
   Package,
   AlertTriangle,
   ShoppingCart,
@@ -34,6 +33,7 @@ import type { InventoryItem, CarWashSale, Order } from '@/types';
 import { format } from 'date-fns';
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { SarIcon } from '@/components/ui/sar-icon';
 
 const chartConfig = {
   sales: {
@@ -98,10 +98,10 @@ export default function Dashboard() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <SarIcon className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">${totalInventoryValue.toFixed(2)}</div>
+          <div className="text-2xl font-bold flex items-center">{totalInventoryValue.toFixed(2)} <SarIcon className="h-6 w-6 ml-1" /></div>
           <p className="text-xs text-muted-foreground">
             Estimated value of all items
           </p>
@@ -168,7 +168,7 @@ export default function Dashboard() {
                   tickLine={false}
                   axisLine={false}
                   tickMargin={10}
-                  tickFormatter={(value) => `$${value / 1000}k`}
+                  tickFormatter={(value) => `${value / 1000}k`}
                 />
                 <ChartTooltip
                   cursor={false}
@@ -205,8 +205,8 @@ export default function Dashboard() {
                     <TableCell className="hidden sm:table-cell">
                       {format(new Date(activity.date), 'PPP')}
                     </TableCell>
-                    <TableCell className="text-right">
-                      ${activity.amount.toFixed(2)}
+                    <TableCell className="text-right flex justify-end items-center">
+                      {activity.amount.toFixed(2)} <SarIcon className="h-4 w-4 ml-1" />
                     </TableCell>
                   </TableRow>
                 ))}

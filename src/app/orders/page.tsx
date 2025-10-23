@@ -31,6 +31,7 @@ import { collection } from 'firebase/firestore';
 import type { Order } from '@/types';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
+import { SarIcon } from '@/components/ui/sar-icon';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -114,8 +115,8 @@ export default function OrdersPage() {
                 <TableCell className="hidden md:table-cell">
                   {format(new Date(order.date), 'PPP')}
                 </TableCell>
-                <TableCell className="text-right">
-                  ${order.total.toFixed(2)}
+                <TableCell className="text-right flex justify-end items-center">
+                  {order.total.toFixed(2)} <SarIcon className="h-4 w-4 ml-1" />
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>

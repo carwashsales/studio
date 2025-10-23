@@ -28,6 +28,7 @@ import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebas
 import { collection } from 'firebase/firestore';
 import type { Price } from '@/types';
 import { useRouter } from 'next/navigation';
+import { SarIcon } from '@/components/ui/sar-icon';
 
 export default function PricingPage() {
   const { user, isUserLoading } = useUser();
@@ -88,8 +89,8 @@ export default function PricingPage() {
                 <TableCell className="hidden sm:table-cell">
                   {service.description}
                 </TableCell>
-                <TableCell className="text-right">
-                  ${service.price.toFixed(2)}
+                <TableCell className="text-right flex justify-end items-center">
+                  {service.price.toFixed(2)} <SarIcon className="h-4 w-4 ml-1" />
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
