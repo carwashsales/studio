@@ -123,24 +123,44 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Price",
       "type": "object",
-      "description": "Represents the price of a car wash service.",
+      "description": "Represents the dynamic pricing for a car wash service.",
       "properties": {
         "name": {
           "type": "string",
-          "description": "Type of car wash service (e.g., basic, deluxe, premium)."
+          "description": "Name of the service (e.g., Full Wash)."
         },
-        "description": {
-          "type": "string",
-          "description": "A short description of the service."
+        "needsSize": {
+          "type": "boolean",
+          "description": "Whether this service requires a car size to determine the price."
         },
-        "price": {
+        "hasCoupon": {
+          "type": "boolean",
+          "description": "Whether this service can be paid for with a coupon."
+        },
+        "order": {
           "type": "number",
-          "description": "Price of the car wash service."
+          "description": "A number to sort the services for display."
+        },
+        "prices": {
+          "type": "object",
+          "description": "A map of prices for different car sizes or a default price.",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "price": { "type": "number" },
+              "commission": { "type": "number" },
+              "couponCommission": { "type": "number" }
+            },
+            "required": ["price", "commission"]
+          }
         }
       },
       "required": [
         "name",
-        "price"
+        "needsSize",
+        "hasCoupon",
+        "prices",
+        "order"
       ]
     },
     "Staff": {

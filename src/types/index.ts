@@ -31,8 +31,16 @@ export type CarWashSale = {
 export type Price = {
   id: string;
   name: string;
-  description: string;
-  price: number;
+  needsSize: boolean;
+  hasCoupon: boolean;
+  order: number;
+  prices: {
+    [size: string]: {
+      price: number;
+      commission: number;
+      couponCommission?: number;
+    }
+  }
 };
 
 export type Staff = {

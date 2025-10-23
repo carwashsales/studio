@@ -29,12 +29,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Settings } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, useUser } from '@/firebase';
-import { collection } from 'firebase/firestore';
-import type { CarWashSale, Staff } from '@/types';
+import { collection, orderBy, query } from 'firebase/firestore';
+import type { CarWashSale, Staff, Price as ServicePrice } from '@/types';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { SERVICE_TYPES } from '@/lib/services';
 import { useToast } from '@/components/ui/use-toast';
 
 type PaymentType = 'coupon' | 'cash' | 'machine' | 'not-paid';
@@ -58,12 +57,14 @@ export default function SalesPage() {
   // Firestore Collections
   const salesCollection = useMemoFirebase(() => (firestore && user ? collection(firestore, 'sales') : null), [firestore, user]);
   const staffCollection = useMemoFirebase(() => (firestore && user ? collection(firestore, 'staff') : null), [firestore, user]);
+  const servicesQuery = useMemoFirebase(() => (firestore && user ? query(collection(firestore, 'services'), orderBy('order')) : null), [firestore, user]);
   
   const { data: sales, isLoading: salesLoading } = useCollection<CarWashSale>(salesCollection);
   const { data: staff, isLoading: staffLoading } = useCollection<Staff>(staffCollection);
+  const { data: services, isLoading: servicesLoading } = useCollection<ServicePrice>(servicesQuery);
 
   const noStaff = !staff || staff.length === 0;
-  const serviceConfig = serviceType ? SERVICE_TYPES[serviceType as keyof typeof SERVICE_TYPES] : null;
+  const serviceConfig = services?.find(s => s.id === serviceType);
   const showWaxOption = serviceType === 'full-wash' || serviceType === 'outside-only';
 
   const resetForm = React.useCallback(() => {
@@ -117,7 +118,7 @@ export default function SalesPage() {
       setPrice('');
       setCommission('');
     }
-   }, [serviceType, carSize, paymentType, serviceConfig, waxAddOn, showWaxOption, resetForm]);
+   }, [serviceType, carSize, paymentType, serviceConfig, waxAddOn, showWaxOption]);
 
   const validateForm = () => {
     const newErrors: { [key: string]: boolean } = {};
@@ -130,7 +131,7 @@ export default function SalesPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handlePaymentTypeChange = (method: PaymentType) => {
+ const handlePaymentTypeChange = (method: PaymentType) => {
     setPaymentType(prev => (prev === method ? undefined : method));
     setErrors(prev => ({...prev, paymentType: false}));
   };
@@ -178,9 +179,14 @@ export default function SalesPage() {
     }
   }, [user, isUserLoading, router]);
 
-  if (isUserLoading || !user) {
+  if (isUserLoading || !user || servicesLoading) {
     return <div>Loading...</div>;
   }
+  
+  const carSizes = React.useMemo(() => {
+    if (!serviceConfig || !serviceConfig.needsSize) return [];
+    return Object.keys(serviceConfig.prices);
+  }, [serviceConfig]);
 
   return (
     <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
@@ -207,8 +213,8 @@ export default function SalesPage() {
                     <SelectValue placeholder="Select a service" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(SERVICE_TYPES).map(([key, srv]) => (
-                      <SelectItem key={key} value={key}>{srv.name}</SelectItem>
+                    {services?.map((srv) => (
+                      <SelectItem key={srv.id} value={srv.id}>{srv.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -217,12 +223,12 @@ export default function SalesPage() {
               {serviceConfig?.needsSize && (
                 <div className="grid gap-2">
                   <Label htmlFor="car-size">Car Size</Label>
-                  <Select value={carSize} onValueChange={(v) => { setCarSize(v); setErrors(p => ({...p, carSize: false}))}} disabled={noStaff}>
+                  <Select value={carSize} onValueChange={(v) => { setCarSize(v); setErrors(p => ({...p, carSize: false}))}} disabled={noStaff || !serviceConfig?.needsSize}>
                     <SelectTrigger id="car-size" data-invalid={errors.carSize ? 'true' : 'false'}><SelectValue placeholder="Select car size" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="small">Small</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="large">Large</SelectItem>
+                      {carSizes.map(size => (
+                        <SelectItem key={size} value={size} className="capitalize">{size.replace('-', ' ')}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -264,8 +270,8 @@ export default function SalesPage() {
                   {serviceConfig?.hasCoupon && (
                     <div className="flex items-center gap-2"><Checkbox id="payment-coupon" checked={paymentType === 'coupon'} onCheckedChange={() => handlePaymentTypeChange('coupon')} disabled={noStaff || paymentType === 'not-paid'} /><Label htmlFor="payment-coupon" className="cursor-pointer">Coupon</Label></div>
                   )}
-                  <div className="flex items-center gap-2"><Checkbox id="payment-cash" checked={paymentType === 'cash'} onCheckedChange={() => handlePaymentTypeChange('cash')} disabled={noStaff || paymentType === 'coupon'} /><Label htmlFor="payment-cash" className="cursor-pointer">Cash</Label></div>
-                  <div className="flex items-center gap-2"><Checkbox id="payment-machine" checked={paymentType === 'machine'} onCheckedChange={() => handlePaymentTypeChange('machine')} disabled={noStaff || paymentType === 'coupon'} /><Label htmlFor="payment-machine" className="cursor-pointer">Machine</Label></div>
+                  <div className="flex items-center gap-2"><Checkbox id="payment-cash" checked={paymentType === 'cash'} onCheckedChange={() => handlePaymentTypeChange('cash')} disabled={noStaff || paymentType === 'not-paid'} /><Label htmlFor="payment-cash" className="cursor-pointer">Cash</Label></div>
+                  <div className="flex items-center gap-2"><Checkbox id="payment-machine" checked={paymentType === 'machine'} onCheckedChange={() => handlePaymentTypeChange('machine')} disabled={noStaff || paymentType === 'not-paid'} /><Label htmlFor="payment-machine" className="cursor-pointer">Machine</Label></div>
                   <div className="flex items-center gap-2"><Checkbox id="payment-not-paid" checked={paymentType === 'not-paid'} onCheckedChange={() => handlePaymentTypeChange('not-paid')} disabled={noStaff} /><Label htmlFor="payment-not-paid" className="cursor-pointer">Not Paid</Label></div>
                 </div>
               </div>
