@@ -12,15 +12,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { useAuth, useUser, initiateEmailSignUp } from '@/firebase';
+import { useAuth, useUser, useFirestore } from '@/firebase';
 import { useRouter } from 'next/navigation';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { seedDefaultServices } from '@/lib/services';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const auth = useAuth();
+  const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
@@ -28,8 +33,33 @@ export default function RegisterPage() {
     }
   }, [user, router]);
 
-  const handleSignUp = () => {
-    initiateEmailSignUp(auth, email, password);
+  const handleSignUp = async () => {
+    if (!auth || !firestore) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Firebase services are not available. Please try again later.",
+        });
+        return;
+    }
+
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const newUser = userCredential.user;
+        await seedDefaultServices(firestore, newUser.uid);
+        toast({
+            title: "Account Created",
+            description: "Your account has been created and default services have been set up.",
+        });
+        // The onAuthStateChanged listener will handle the redirect
+    } catch (error: any) {
+        console.error("Error signing up:", error);
+        toast({
+            variant: "destructive",
+            title: "Sign-up failed",
+            description: error.message || "An unexpected error occurred.",
+        });
+    }
   };
   
   if (isUserLoading || user) {

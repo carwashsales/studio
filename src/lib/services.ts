@@ -106,28 +106,21 @@ export const SERVICE_TYPES = {
     }
 };
 
-// This function will set up the default services in Firestore if they don't exist.
-export async function seedDefaultServices(db: Firestore) {
-  const servicesCollection = collection(db, 'services');
+// This function will set up the default services in Firestore if they don't exist for a specific user.
+export async function seedDefaultServices(db: Firestore, userId: string) {
+  const servicesCollection = collection(db, 'users', userId, 'services');
   const snapshot = await getDocs(servicesCollection);
-  const existingServiceIds = snapshot.docs.map(doc => doc.id);
-  const defaultServiceIds = Object.keys(SERVICE_TYPES);
-
-  const missingServiceIds = defaultServiceIds.filter(id => !existingServiceIds.includes(id));
-
-  if (missingServiceIds.length > 0) {
-    console.log('Missing services found, seeding them now...');
+  
+  if (snapshot.empty) {
+    console.log(`No services found for user ${userId}, seeding them now...`);
     const batch = writeBatch(db);
-    missingServiceIds.forEach((id) => {
-      const serviceData = (SERVICE_TYPES as any)[id];
-      if (serviceData) {
-        const docRef = doc(servicesCollection, id);
-        batch.set(docRef, serviceData);
-      }
+    Object.entries(SERVICE_TYPES).forEach(([id, serviceData]) => {
+      const docRef = doc(servicesCollection, id);
+      batch.set(docRef, serviceData);
     });
     await batch.commit();
-    console.log('Missing default services have been seeded.');
+    console.log('Default services have been seeded for the new user.');
   } else {
-    console.log('All default services already exist in Firestore.');
+    console.log(`Services already exist for user ${userId}.`);
   }
 }

@@ -177,6 +177,19 @@
       "required": [
         "name"
       ]
+    },
+    "User": {
+        "title": "User",
+        "type": "object",
+        "description": "Represents a user's profile.",
+        "properties": {
+            "email": {
+                "type": "string",
+                "format": "email",
+                "description": "User's email address."
+            }
+        },
+        "required": ["email"]
     }
   },
   "auth": {
@@ -187,6 +200,13 @@
   },
   "firestore": {
     "structure": [
+      {
+        "path": "users",
+        "schema": {
+          "$ref": "#/entities/User"
+        },
+        "description": "Stores user profile information."
+      },
       {
         "path": "inventory",
         "schema": {
@@ -209,11 +229,11 @@
         "description": "Stores car wash sale transactions.  Each document represents a single sale transaction."
       },
       {
-        "path": "services",
+        "path": "users/{userId}/services",
         "schema": {
           "$ref": "#/entities/Price"
         },
-        "description": "Stores pricing information for car wash services. Each document represents the price for a specific service."
+        "description": "Stores pricing information for a specific user's car wash services."
       },
       {
         "path": "staff",
@@ -223,6 +243,6 @@
         "description": "Stores staff members. Each document represents a single staff member."
       }
     ],
-    "reasoning": "The Firestore structure is designed to manage inventory, orders, sales, pricing and staff for the CleanSweep Inventory application. It prioritizes authorization independence and data clarity. User authentication is handled via email/password and anonymous login. Since all data is essentially private to the application's management, a single level collection is used for each major entity. This simplifies security rules, as access control is primarily based on user authentication rather than complex hierarchical ownership."
+    "reasoning": "The Firestore structure is designed to manage inventory, orders, sales, pricing and staff for the CleanSweep Inventory application. It prioritizes authorization independence and data clarity. User authentication is handled via email/password. Pricing data is stored in a subcollection under each user to allow for per-user customization, initialized with default values on registration. Other collections are global as they are managed by the app owner."
   }
 }

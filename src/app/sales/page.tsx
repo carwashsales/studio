@@ -57,7 +57,7 @@ export default function SalesPage() {
   // Firestore Collections
   const salesQuery = useMemoFirebase(() => (firestore && user ? query(collection(firestore, 'sales'), orderBy('date', 'desc')) : null), [firestore, user]);
   const staffCollection = useMemoFirebase(() => (firestore && user ? collection(firestore, 'staff') : null), [firestore, user]);
-  const servicesQuery = useMemoFirebase(() => (firestore && user ? query(collection(firestore, 'services'), orderBy('order')) : null), [firestore, user]);
+  const servicesQuery = useMemoFirebase(() => (firestore && user ? query(collection(firestore, 'users', user.uid, 'services'), orderBy('order')) : null), [firestore, user]);
   
   const { data: sales, isLoading: salesLoading } = useCollection<CarWashSale>(salesQuery);
   const { data: staff, isLoading: staffLoading } = useCollection<Staff>(staffCollection);
@@ -176,17 +176,17 @@ export default function SalesPage() {
       description: 'The new sale has been successfully added.',
     });
   };
-
-  React.useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isUserLoading, router]);
   
   const carSizes = React.useMemo(() => {
     if (!serviceConfig || !serviceConfig.needsSize) return [];
     return Object.keys(serviceConfig.prices);
   }, [serviceConfig]);
+  
+  React.useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
 
   if (isUserLoading || !user || servicesLoading) {
     return <div>Loading...</div>;

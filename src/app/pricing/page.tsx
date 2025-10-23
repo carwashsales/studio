@@ -26,7 +26,6 @@ import { collection, doc, orderBy, query } from 'firebase/firestore';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { seedDefaultServices } from '@/lib/services';
 import { Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -74,7 +73,7 @@ export default function PricingPage() {
   const { toast } = useToast();
 
   const servicesQuery = useMemoFirebase(
-    () => (firestore && user ? query(collection(firestore, 'services'), orderBy('order')) : null),
+    () => (firestore && user ? query(collection(firestore, 'users', user.uid, 'services'), orderBy('order')) : null),
     [firestore, user]
   );
   const { data: services, isLoading } = useCollection<ServicePrice>(servicesQuery);
@@ -84,16 +83,10 @@ export default function PricingPage() {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
-
-  React.useEffect(() => {
-    if (firestore && user && !isLoading && (!services || services.length === 0)) {
-        seedDefaultServices(firestore);
-    }
-  }, [firestore, user, isLoading, services]);
   
   const handleUpdate = (serviceId: string, updatedData: Partial<ServicePrice>) => {
-    if (!firestore) return;
-    const serviceRef = doc(firestore, 'services', serviceId);
+    if (!firestore || !user) return;
+    const serviceRef = doc(firestore, 'users', user.uid, 'services', serviceId);
     setDocumentNonBlocking(serviceRef, updatedData, { merge: true });
     toast({
       title: 'Service Updated',
@@ -158,12 +151,14 @@ export default function PricingPage() {
                          />
                       </TableCell>
                       <TableCell className="text-right">
-                        <EditableCell 
-                          value={details.couponCommission ?? 0}
-                          isEditable={service.hasCoupon && details.couponCommission !== undefined}
-                          onSave={(newValue) => handleUpdate(service.id, { prices: { ...service.prices, [size]: { ...details, couponCommission: newValue } } })}
-                        />
-                        {!service.hasCoupon || details.couponCommission === undefined ? <Badge variant="outline" className="ml-2">N/A</Badge> : null}
+                        {service.hasCoupon && details.couponCommission !== undefined ? (
+                           <EditableCell 
+                              value={details.couponCommission ?? 0}
+                              onSave={(newValue) => handleUpdate(service.id, { prices: { ...service.prices, [size]: { ...details, couponCommission: newValue } } })}
+                           />
+                        ) : (
+                          <Badge variant="outline" className="ml-2">N/A</Badge>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
