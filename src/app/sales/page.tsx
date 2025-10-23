@@ -55,11 +55,11 @@ export default function SalesPage() {
   const [errors, setErrors] = React.useState<{ [key: string]: boolean }>({});
 
   // Firestore Collections
-  const salesCollection = useMemoFirebase(() => (firestore && user ? collection(firestore, 'sales') : null), [firestore, user]);
+  const salesQuery = useMemoFirebase(() => (firestore && user ? query(collection(firestore, 'sales'), orderBy('date', 'desc')) : null), [firestore, user]);
   const staffCollection = useMemoFirebase(() => (firestore && user ? collection(firestore, 'staff') : null), [firestore, user]);
   const servicesQuery = useMemoFirebase(() => (firestore && user ? query(collection(firestore, 'services'), orderBy('order')) : null), [firestore, user]);
   
-  const { data: sales, isLoading: salesLoading } = useCollection<CarWashSale>(salesCollection);
+  const { data: sales, isLoading: salesLoading } = useCollection<CarWashSale>(salesQuery);
   const { data: staff, isLoading: staffLoading } = useCollection<Staff>(staffCollection);
   const { data: services, isLoading: servicesLoading } = useCollection<ServicePrice>(servicesQuery);
 
@@ -88,7 +88,7 @@ export default function SalesPage() {
     if (!serviceConfig.hasCoupon && paymentType === 'coupon') setPaymentType(undefined);
     if (!showWaxOption) setWaxAddOn(false);
 
-    const priceKey = serviceConfig.needsSize ? carSize : 'default';
+    const priceKey = serviceConfig.needsSize && carSize ? carSize : 'default';
     if (!priceKey) {
       setPrice(''); setCommission('');
       return;
@@ -135,17 +135,13 @@ export default function SalesPage() {
   };
 
  const handlePaymentTypeChange = (method: PaymentType) => {
-    if (method === 'not-paid') {
-      setPaymentType(prev => (prev === 'not-paid' ? undefined : 'not-paid'));
-    } else {
-      setPaymentType(prev => (prev === method || prev === 'not-paid' ? undefined : method));
-    }
+    setPaymentType(prev => (prev === method ? undefined : method));
     setErrors(prev => ({...prev, paymentType: false}));
   };
 
   const handleAddSale = (e: React.FormEvent) => {
     e.preventDefault();
-    if (noStaff || !validateForm() || !salesCollection || !user) {
+    if (noStaff || !validateForm() || !firestore || !user) {
       toast({
         title: 'Please fix the errors',
         description: 'Fill out all required fields before submitting.',
@@ -153,6 +149,7 @@ export default function SalesPage() {
       });
       return;
     }
+    const salesCollection = collection(firestore, 'sales');
 
     const selectedStaff = staff?.find(s => s.id === staffId);
     if (!selectedStaff) return;
@@ -233,7 +230,7 @@ export default function SalesPage() {
                   <Select value={carSize} onValueChange={(v) => { setCarSize(v); setErrors(p => ({...p, carSize: false}))}} disabled={noStaff || !serviceConfig?.needsSize}>
                     <SelectTrigger id="car-size" data-invalid={errors.carSize ? 'true' : undefined}><SelectValue placeholder="Select car size" /></SelectTrigger>
                     <SelectContent>
-                      {carSizes.sort((a,b) => serviceConfig.prices[a].price - serviceConfig.prices[b].price).map(size => (
+                      {carSizes.sort((a,b) => (serviceConfig?.prices[a]?.price || 0) - (serviceConfig?.prices[b]?.price || 0)).map(size => (
                         <SelectItem key={size} value={size} className="capitalize">{size.replace('-', ' ')}</SelectItem>
                       ))}
                     </SelectContent>

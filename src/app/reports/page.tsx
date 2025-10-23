@@ -24,6 +24,7 @@ import {
   Pie,
   PieChart,
   Cell,
+  Legend,
 } from "recharts";
 import * as React from "react";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -42,11 +43,13 @@ const costChartConfig = {
 } satisfies ChartConfig;
 
 const salesPieChartConfig = {
-  'Basic': { label: 'Basic', color: 'hsl(var(--chart-1))' },
-  'Deluxe': { label: 'Deluxe', color: 'hsl(var(--chart-2))' },
-  'Premium': { label: 'Premium', color: 'hsl(var(--chart-3))' },
-  'Interior': { label: 'Interior Clean', color: 'hsl(var(--chart-4))' },
+  "Full Wash": { label: "Full Wash", color: "hsl(var(--chart-1))" },
+  "Outside Only": { label: "Outside Only", color: "hsl(var(--chart-2))" },
+  "Interior Only": { label: "Interior Only", color: "hsl(var(--chart-3))" },
+  "Water Only": { label: "Water Only", color: "hsl(var(--chart-4))" },
+  "Other": { label: "Other", color: "hsl(var(--chart-5))" },
 } satisfies ChartConfig;
+
 
 export default function ReportsPage() {
   const { user, isUserLoading } = useUser();
@@ -90,15 +93,19 @@ export default function ReportsPage() {
     if (!sales) return [];
     const serviceSales: { [key: string]: number } = {};
     sales.forEach((sale) => {
-      // Extract the base service name (e.g., "Basic" from "Basic Wash")
-      const serviceBaseName = sale.service.split(' ')[0];
-      serviceSales[serviceBaseName] = (serviceSales[serviceBaseName] || 0) + sale.amount;
+      const serviceName = sale.service;
+      const mappedService = salesPieChartConfig[serviceName as keyof typeof salesPieChartConfig] 
+        ? serviceName 
+        : "Other";
+      serviceSales[mappedService] = (serviceSales[mappedService] || 0) + sale.amount;
     });
     return Object.entries(serviceSales).map(([service, sales]) => ({
-      service,
+      name: service,
       sales,
+      fill: salesPieChartConfig[service as keyof typeof salesPieChartConfig]?.color || 'hsl(var(--muted))'
     }));
   }, [sales]);
+
 
   // A simple mapping of item quantity for usage.
   // A real app might calculate usage differently.
@@ -166,21 +173,22 @@ export default function ReportsPage() {
         <CardContent className="flex justify-center">
             <ChartContainer config={salesPieChartConfig} className="mx-auto aspect-square h-[350px]">
                 <PieChart>
-                <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent hideLabel />}
-                />
-                <Pie
-                    data={salesByServiceData}
-                    dataKey="sales"
-                    nameKey="service"
-                    innerRadius={60}
-                    strokeWidth={5}
-                >
-                    {salesByServiceData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={salesPieChartConfig[entry.service as keyof typeof salesPieChartConfig]?.color || 'hsl(var(--muted))'} />
+                  <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent hideLabel />}
+                  />
+                  <Pie
+                      data={salesByServiceData}
+                      dataKey="sales"
+                      nameKey="name"
+                      innerRadius={60}
+                      strokeWidth={5}
+                  >
+                    {salesByServiceData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.fill} />
                     ))}
-                </Pie>
+                  </Pie>
+                  <Legend />
                 </PieChart>
             </ChartContainer>
         </CardContent>
