@@ -1,97 +1,98 @@
 /**
- * @fileoverview Firestore Security Rules for CleanSweep Inventory application.
+ * @fileoverview Firestore Security Rules for CleanSweep Inventory.
  *
  * Core Philosophy:
- * This ruleset prioritizes simplicity and assumes all data is private to the application's management team.
- * It enforces authentication for all write operations and currently allows public read access to `sales` data.
- * Other collections are read restricted to authenticated users, though this might need further refinement based on usage.
+ * This ruleset enforces a simple authentication model where any authenticated user can read data, but only authenticated users can modify data. No role-based access control is implemented.
  *
  * Data Structure:
+ * The Firestore database consists of the following top-level collections:
  * - /inventory: Stores inventory items.
  * - /orders: Stores orders for new supplies.
  * - /sales: Stores car wash sale transactions.
  * - /services: Stores pricing information for car wash services.
+ * - /staff: Stores staff members.
  *
  * Key Security Decisions:
- * - Public read access is granted to the `sales` collection to allow for unauthenticated reporting (subject to review).
- * - All write operations require authentication.
- * - Data shape validation is relaxed in this prototyping phase to enable rapid iteration.
- *
- * Denormalization for Authorization:
- * N/A - The current data model does not require denormalization. All authorization decisions are based on authentication.
- *
- * Structural Segregation:
- * N/A - There is no segregation of public and private data. All data is considered private except for sales.
+ * - Public reads for all collections.
+ * - Authenticated user required for write operations on all collections.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Secures the 'inventory' collection, requiring authentication for all write operations and allowing authenticated users to read.
+     * @description Grants read access to the 'inventory' collection for all users, but requires authentication for create, update, and delete operations.
      * @path /databases/{database}/documents/inventory
-     * @allow (create) - Authenticated user can create an inventory item.
-     * @deny (create) - Unauthenticated user attempts to create an inventory item.
-     * @allow (get, list) - Authenticated user can read inventory.
-     * @deny (get, list) - Unauthenticated user cannot read inventory.
-     * @principle Requires authentication for all write operations; authenticated read access.
+     * @allow (get, list): Any user can read inventory items.
+     * @allow (create, update, delete): Only authenticated users can modify inventory items.
+     * @deny (create, update, delete): Unauthenticated users cannot modify inventory items.
+     * @principle Allows public read access while restricting write access to authenticated users.
      */
     match /inventory/{inventoryId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow get, list: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow update: if isSignedIn() && resource != null;
+      allow delete: if isSignedIn() && resource != null;
     }
 
     /**
-     * @description Secures the 'orders' collection, requiring authentication for all write operations and allowing authenticated users to read.
+     * @description Grants read access to the 'orders' collection for all users, but requires authentication for create, update, and delete operations.
      * @path /databases/{database}/documents/orders
-     * @allow (create) - Authenticated user can create an order.
-     * @deny (create) - Unauthenticated user attempts to create an order.
-     * @allow (get, list) - Authenticated user can read orders.
-     * @deny (get, list) - Unauthenticated user cannot read orders.
-     * @principle Requires authentication for all write operations; authenticated read access.
+     * @allow (get, list): Any user can read orders.
+     * @allow (create, update, delete): Only authenticated users can modify orders.
+     * @deny (create, update, delete): Unauthenticated users cannot modify orders.
+     * @principle Allows public read access while restricting write access to authenticated users.
      */
     match /orders/{orderId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow get, list: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow update: if isSignedIn() && resource != null;
+      allow delete: if isSignedIn() && resource != null;
     }
 
     /**
-     * @description Secures the 'sales' collection, allowing public read access but requiring authentication for write operations.
+     * @description Grants read access to the 'sales' collection for all users, but requires authentication for create, update, and delete operations.
      * @path /databases/{database}/documents/sales
-     * @allow (get, list) - Any user (authenticated or unauthenticated) can read sales data.
-     * @deny (create) - Unauthenticated user attempts to create a sale.
-     * @allow (create) - Authenticated user can create a sale.
-     * @principle Allows public read access with authentication required for writes.
+     * @allow (get, list): Any user can read sales transactions.
+     * @allow (create, update, delete): Only authenticated users can modify sales transactions.
+     * @deny (create, update, delete): Unauthenticated users cannot modify sales transactions.
+     * @principle Allows public read access while restricting write access to authenticated users.
      */
     match /sales/{saleId} {
-      allow get: if true;
-      allow list: if true;
+      allow get, list: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow update: if isSignedIn() && resource != null;
+      allow delete: if isSignedIn() && resource != null;
     }
 
     /**
-     * @description Secures the 'services' collection, requiring authentication for all write operations and allowing authenticated users to read.
+     * @description Grants read access to the 'services' collection for all users, but requires authentication for create, update, and delete operations.
      * @path /databases/{database}/documents/services
-     * @allow (create) - Authenticated user can create a service.
-     * @deny (create) - Unauthenticated user attempts to create a service.
-     * @allow (get, list) - Authenticated user can read services.
-     * @deny (get, list) - Unauthenticated user cannot read services.
-     * @principle Requires authentication for all write operations; authenticated read access.
+     * @allow (get, list): Any user can read pricing information.
+     * @allow (create, update, delete): Only authenticated users can modify pricing information.
+     * @deny (create, update, delete): Unauthenticated users cannot modify pricing information.
+     * @principle Allows public read access while restricting write access to authenticated users.
      */
     match /services/{serviceId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow get, list: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn();
+      allow update: if isSignedIn() && resource != null;
+      allow delete: if isSignedIn() && resource != null;
+    }
+
+    /**
+     * @description Grants read access to the 'staff' collection for all users, but requires authentication for create, update, and delete operations.
+     * @path /databases/{database}/documents/staff
+     * @allow (get, list): Any user can read staff members.
+     * @allow (create, update, delete): Only authenticated users can modify staff members.
+     * @deny (create, update, delete): Unauthenticated users cannot modify staff members.
+     * @principle Allows public read access while restricting write access to authenticated users.
+     */
+    match /staff/{staffId} {
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource != null;
+      allow delete: if isSignedIn() && resource != null;
     }
 
     function isSignedIn() {
