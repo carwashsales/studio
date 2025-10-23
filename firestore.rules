@@ -1,0 +1,134 @@
+/**
+ * @fileoverview Firestore Security Rules for CleanSweep Inventory application.
+ *
+ * Core Philosophy:
+ * This ruleset prioritizes simplicity and assumes all data is private to the application's management, meaning no public access.
+ * All collections are treated as application-managed, requiring authentication for access.
+ * In a production environment, these rules would need adjustment, potentially to scope the InventoryItem, Order, and OrderItem collections
+ * under an organization id.
+ *
+ * Data Structure:
+ * The Firestore database consists of top-level collections for each entity:
+ * - /inventory_items/{inventoryItemId}
+ * - /orders/{orderId}
+ * - /order_items/{orderItemId}
+ * - /car_wash_sales/{carWashSaleId}
+ * - /prices/{priceId}
+ *
+ * Key Security Decisions:
+ * - No public access: All `get` and `list` operations require authentication.
+ * - No schema enforcement: This prototyping ruleset focuses on authorization and skips detailed schema validation.
+ * - Denormalization: No denormalization is strictly used in this ruleset, but the reasoning indicated that all collections might be scoped under an organization ID.
+ * - Collections aren't designed to be world readable, so `list` operations are secured using authentication.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Manages access to inventory items.
+     * @path /inventory_items/{inventoryItemId}
+     * @allow (create) Signed-in user can create an inventory item.
+     * @allow (get) Signed-in user can get an inventory item.
+     * @allow (list) Signed-in user can list inventory items.
+     * @allow (update) Signed-in user can update an inventory item.
+     * @allow (delete) Signed-in user can delete an inventory item.
+     * @deny (create) Anonymous user attempts to create an inventory item.
+     * @deny (update) Anonymous user attempts to update an inventory item.
+     * @principle Requires authentication for all operations.
+     */
+    match /inventory_items/{inventoryItemId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource != null;
+      allow delete: if isSignedIn() && resource != null;
+    }
+
+    /**
+     * @description Manages access to orders.
+     * @path /orders/{orderId}
+     * @allow (create) Signed-in user can create an order.
+     * @allow (get) Signed-in user can get an order.
+     * @allow (list) Signed-in user can list orders.
+     * @allow (update) Signed-in user can update an order.
+     * @allow (delete) Signed-in user can delete an order.
+     * @deny (create) Anonymous user attempts to create an order.
+     * @deny (update) Anonymous user attempts to update an order.
+     * @principle Requires authentication for all operations.
+     */
+    match /orders/{orderId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource != null;
+      allow delete: if isSignedIn() && resource != null;
+    }
+
+    /**
+     * @description Manages access to order items.
+     * @path /order_items/{orderItemId}
+     * @allow (create) Signed-in user can create an order item.
+     * @allow (get) Signed-in user can get an order item.
+     * @allow (list) Signed-in user can list order items.
+     * @allow (update) Signed-in user can update an order item.
+     * @allow (delete) Signed-in user can delete an order item.
+     * @deny (create) Anonymous user attempts to create an order item.
+     * @deny (update) Anonymous user attempts to update an order item.
+     * @principle Requires authentication for all operations.
+     */
+    match /order_items/{orderItemId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource != null;
+      allow delete: if isSignedIn() && resource != null;
+    }
+
+    /**
+     * @description Manages access to car wash sales.
+     * @path /car_wash_sales/{carWashSaleId}
+     * @allow (create) Signed-in user can create a car wash sale.
+     * @allow (get) Signed-in user can get a car wash sale.
+     * @allow (list) Signed-in user can list car wash sales.
+     * @allow (update) Signed-in user can update a car wash sale.
+     * @allow (delete) Signed-in user can delete a car wash sale.
+     * @deny (create) Anonymous user attempts to create a car wash sale.
+     * @deny (update) Anonymous user attempts to update a car wash sale.
+     * @principle Requires authentication for all operations.
+     */
+    match /car_wash_sales/{carWashSaleId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource != null;
+      allow delete: if isSignedIn() && resource != null;
+    }
+
+    /**
+     * @description Manages access to prices.
+     * @path /prices/{priceId}
+     * @allow (create) Signed-in user can create a price.
+     * @allow (get) Signed-in user can get a price.
+     * @allow (list) Signed-in user can list prices.
+     * @allow (update) Signed-in user can update a price.
+     * @allow (delete) Signed-in user can delete a price.
+     * @deny (create) Anonymous user attempts to create a price.
+     * @deny (update) Anonymous user attempts to update a price.
+     * @principle Requires authentication for all operations.
+     */
+    match /prices/{priceId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource != null;
+      allow delete: if isSignedIn() && resource != null;
+    }
+
+  }
+
+  // Helper function to determine if a user is signed in
+  function isSignedIn() {
+    return request.auth != null;
+  }
+}

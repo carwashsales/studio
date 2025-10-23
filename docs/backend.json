@@ -1,0 +1,275 @@
+{
+  "entities": {
+    "InventoryItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "InventoryItem",
+      "type": "object",
+      "description": "Represents an item in the carwash inventory.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the inventory item."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the inventory item."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the inventory item."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Current quantity of the item in stock."
+        },
+        "unitOfMeasure": {
+          "type": "string",
+          "description": "Unit of measurement for the item (e.g., gallons, pounds, units)."
+        },
+        "reorderPoint": {
+          "type": "number",
+          "description": "The quantity at which a reorder alert should be triggered."
+        },
+        "location": {
+          "type": "string",
+          "description": "The location where the item is stored."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "quantity",
+        "unitOfMeasure"
+      ]
+    },
+    "Order": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Order",
+      "type": "object",
+      "description": "Represents an order for new supplies.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the order."
+        },
+        "orderDate": {
+          "type": "string",
+          "description": "Date the order was placed.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the order (e.g., pending, processing, shipped, delivered)."
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "Total amount of the order."
+        },
+        "supplier": {
+          "type": "string",
+          "description": "Name of the supplier."
+        }
+      },
+      "required": [
+        "id",
+        "orderDate",
+        "status",
+        "totalAmount",
+        "supplier"
+      ]
+    },
+    "OrderItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "OrderItem",
+      "type": "object",
+      "description": "Represents a single item within an order.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the order item."
+        },
+        "orderId": {
+          "type": "string",
+          "description": "Reference to Order. (Relationship: Order 1:N OrderItem)"
+        },
+        "inventoryItemId": {
+          "type": "string",
+          "description": "Reference to InventoryItem. (Relationship: InventoryItem 1:N OrderItem)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Quantity of the item ordered."
+        },
+        "price": {
+          "type": "number",
+          "description": "Price of the item at the time of order."
+        }
+      },
+      "required": [
+        "id",
+        "orderId",
+        "inventoryItemId",
+        "quantity",
+        "price"
+      ]
+    },
+    "CarWashSale": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CarWashSale",
+      "type": "object",
+      "description": "Represents a car wash sale transaction.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the car wash sale transaction."
+        },
+        "saleDate": {
+          "type": "string",
+          "description": "Date and time of the sale transaction.",
+          "format": "date-time"
+        },
+        "serviceType": {
+          "type": "string",
+          "description": "Type of car wash service provided (e.g., basic, deluxe, premium)."
+        },
+        "price": {
+          "type": "number",
+          "description": "Price of the car wash service."
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "Payment method used for the transaction (e.g., cash, credit card)."
+        }
+      },
+      "required": [
+        "id",
+        "saleDate",
+        "serviceType",
+        "price",
+        "paymentMethod"
+      ]
+    },
+    "Price": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Price",
+      "type": "object",
+      "description": "Represents the price of a car wash service.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the price entry."
+        },
+        "serviceType": {
+          "type": "string",
+          "description": "Type of car wash service (e.g., basic, deluxe, premium)."
+        },
+        "price": {
+          "type": "number",
+          "description": "Price of the car wash service."
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "Date and time the price was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "serviceType",
+        "price",
+        "lastUpdated"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "inventory_items/{inventoryItemId}",
+        "definition": {
+          "entityName": "InventoryItem",
+          "schema": {
+            "$ref": "#/backend/entities/InventoryItem"
+          },
+          "description": "Stores inventory items. Each document represents a specific item in the carwash inventory.",
+          "params": [
+            {
+              "name": "inventoryItemId",
+              "description": "Unique identifier for the inventory item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "orders/{orderId}",
+        "definition": {
+          "entityName": "Order",
+          "schema": {
+            "$ref": "#/backend/entities/Order"
+          },
+          "description": "Stores orders for new supplies. Each document represents a specific order.",
+          "params": [
+            {
+              "name": "orderId",
+              "description": "Unique identifier for the order."
+            }
+          ]
+        }
+      },
+      {
+        "path": "order_items/{orderItemId}",
+        "definition": {
+          "entityName": "OrderItem",
+          "schema": {
+            "$ref": "#/backend/entities/OrderItem"
+          },
+          "description": "Stores individual items within an order.  Each document represents a single item in a specific order.",
+          "params": [
+            {
+              "name": "orderItemId",
+              "description": "Unique identifier for the order item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "car_wash_sales/{carWashSaleId}",
+        "definition": {
+          "entityName": "CarWashSale",
+          "schema": {
+            "$ref": "#/backend/entities/CarWashSale"
+          },
+          "description": "Stores car wash sale transactions.  Each document represents a single sale transaction.",
+          "params": [
+            {
+              "name": "carWashSaleId",
+              "description": "Unique identifier for the car wash sale transaction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "prices/{priceId}",
+        "definition": {
+          "entityName": "Price",
+          "schema": {
+            "$ref": "#/backend/entities/Price"
+          },
+          "description": "Stores pricing information for car wash services. Each document represents the price for a specific service.",
+          "params": [
+            {
+              "name": "priceId",
+              "description": "Unique identifier for the price entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to manage inventory, orders, sales, and pricing for the CleanSweep Inventory application. It prioritizes authorization independence and data clarity. User authentication is handled via email/password and anonymous login. Since all data is essentially private to the application's management, a single level collection is used for each major entity. This simplifies security rules, as access control is primarily based on user authentication rather than complex hierarchical ownership. CarWashSales and Prices are global data. The other collections could be scoped under an organization ID."
+  }
+}
