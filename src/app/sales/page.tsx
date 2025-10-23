@@ -185,15 +185,15 @@ export default function SalesPage() {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
-
-  if (isUserLoading || !user || servicesLoading) {
-    return <div>Loading...</div>;
-  }
   
   const carSizes = React.useMemo(() => {
     if (!serviceConfig || !serviceConfig.needsSize) return [];
     return Object.keys(serviceConfig.prices);
   }, [serviceConfig]);
+
+  if (isUserLoading || !user || servicesLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
