@@ -30,9 +30,13 @@ import { seedDefaultServices } from '@/lib/services';
 import { Check, X } from 'lucide-react';
 
 
-const EditableCell = ({ value, onSave }: { value: number; onSave: (newValue: number) => void }) => {
+const EditableCell = ({ value, onSave, isEditable = true }: { value: number; onSave: (newValue: number) => void, isEditable?: boolean }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [currentValue, setCurrentValue] = React.useState(value);
+
+  React.useEffect(() => {
+    setCurrentValue(value);
+  }, [value]);
 
   const handleSave = () => {
     onSave(currentValue);
@@ -41,7 +45,7 @@ const EditableCell = ({ value, onSave }: { value: number; onSave: (newValue: num
 
   if (isEditing) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 justify-end">
         <Input
           type="number"
           value={currentValue}
@@ -55,7 +59,7 @@ const EditableCell = ({ value, onSave }: { value: number; onSave: (newValue: num
   }
 
   return (
-    <div onClick={() => setIsEditing(true)} className="cursor-pointer flex items-center justify-end">
+    <div onClick={() => isEditable && setIsEditing(true)} className={cn("flex items-center justify-end", {"cursor-pointer": isEditable})}>
       {value.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
     </div>
   );
@@ -78,10 +82,13 @@ export default function PricingPage() {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
+  }, [user, isUserLoading, router]);
+
+  React.useEffect(() => {
     if (firestore && user && !isLoading && (!services || services.length === 0)) {
         seedDefaultServices(firestore);
     }
-  }, [user, isUserLoading, router, firestore, isLoading, services]);
+  }, [firestore, user, isLoading, services]);
   
   const handleUpdate = (serviceId: string, updatedData: Partial<ServicePrice>) => {
     if (!firestore) return;
@@ -130,7 +137,7 @@ export default function PricingPage() {
                     <TableHead>{service.needsSize ? 'Car Size' : 'Service'}</TableHead>
                     <TableHead className="text-right">Price</TableHead>
                     <TableHead className="text-right">Commission</TableHead>
-                    {service.hasCoupon && <TableHead className="text-right">Coupon Commission</TableHead>}
+                    <TableHead className="text-right">Coupon Commission</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -149,17 +156,14 @@ export default function PricingPage() {
                             onSave={(newValue) => handleUpdate(service.id, { prices: { ...service.prices, [size]: { ...details, commission: newValue } } })}
                          />
                       </TableCell>
-                      {service.hasCoupon && (
-                        <TableCell className="text-right">
-                           {details.couponCommission !== undefined ? (
-                            <EditableCell 
-                                value={details.couponCommission} 
-                                onSave={(newValue) => handleUpdate(service.id, { prices: { ...service.prices, [size]: { ...details, couponCommission: newValue } } })}
-                            />
-                           ) : <Badge variant="outline">N/A</Badge>
-                           }
-                        </TableCell>
-                      )}
+                      <TableCell className="text-right">
+                        <EditableCell 
+                          value={details.couponCommission ?? 0}
+                          isEditable={service.hasCoupon && details.couponCommission !== undefined}
+                          onSave={(newValue) => handleUpdate(service.id, { prices: { ...service.prices, [size]: { ...details, couponCommission: newValue } } })}
+                        />
+                        {!service.hasCoupon || details.couponCommission === undefined ? <Badge variant="outline" className="ml-2">N/A</Badge> : null}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
