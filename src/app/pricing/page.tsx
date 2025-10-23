@@ -55,8 +55,8 @@ const EditableCell = ({ value, onSave }: { value: number; onSave: (newValue: num
   }
 
   return (
-    <div onClick={() => setIsEditing(true)} className="cursor-pointer">
-      {value.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1 inline-block" />
+    <div onClick={() => setIsEditing(true)} className="cursor-pointer flex items-center justify-end">
+      {value.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
     </div>
   );
 };
@@ -134,7 +134,7 @@ export default function PricingPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {Object.entries(service.prices).map(([size, details]) => (
+                  {Object.entries(service.prices).sort(([, a], [, b]) => (a.price || 0) - (b.price || 0)).map(([size, details]) => (
                     <TableRow key={size}>
                       <TableCell className="font-medium capitalize">{size === 'default' ? service.name : size.replace('-', ' ')}</TableCell>
                       <TableCell className="text-right">

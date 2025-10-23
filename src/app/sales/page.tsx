@@ -45,7 +45,7 @@ export default function SalesPage() {
   const { toast } = useToast();
 
   // Form State
-  const [serviceType, setServiceType] = React.useState('');
+  const [serviceId, setServiceId] = React.useState('');
   const [carSize, setCarSize] = React.useState('');
   const [staffId, setStaffId] = React.useState('');
   const [price, setPrice] = React.useState<number | string>('');
@@ -64,11 +64,11 @@ export default function SalesPage() {
   const { data: services, isLoading: servicesLoading } = useCollection<ServicePrice>(servicesQuery);
 
   const noStaff = !staff || staff.length === 0;
-  const serviceConfig = services?.find(s => s.id === serviceType);
-  const showWaxOption = serviceType === 'full-wash' || serviceType === 'outside-only';
+  const serviceConfig = services?.find(s => s.id === serviceId);
+  const showWaxOption = serviceId.includes('wash');
 
   const resetForm = React.useCallback(() => {
-    setServiceType('');
+    setServiceId('');
     setCarSize('');
     setStaffId('');
     setPrice('');
@@ -108,8 +108,11 @@ export default function SalesPage() {
       }
 
       if (waxAddOn && showWaxOption) {
-        currentPrice += 5; // WAX_PRICE
-        currentCommission += 2; // WAX_COMMISSION
+        const waxPriceInfo = services?.find(s => s.id === 'wax-add-on')?.prices['default'];
+        if(waxPriceInfo) {
+            currentPrice += waxPriceInfo.price;
+            currentCommission += waxPriceInfo.commission;
+        }
       }
       
       setPrice(currentPrice);
@@ -118,11 +121,11 @@ export default function SalesPage() {
       setPrice('');
       setCommission('');
     }
-   }, [serviceType, carSize, paymentType, serviceConfig, waxAddOn, showWaxOption]);
+   }, [serviceId, carSize, paymentType, serviceConfig, waxAddOn, showWaxOption, services]);
 
   const validateForm = () => {
     const newErrors: { [key: string]: boolean } = {};
-    if (!serviceType) newErrors.serviceType = true;
+    if (!serviceId) newErrors.serviceId = true;
     if (serviceConfig?.needsSize && !carSize) newErrors.carSize = true;
     if (!staffId) newErrors.staffId = true;
     if (!paymentType) newErrors.paymentType = true;
@@ -132,7 +135,11 @@ export default function SalesPage() {
   };
 
  const handlePaymentTypeChange = (method: PaymentType) => {
-    setPaymentType(prev => (prev === method ? undefined : method));
+    if (method === 'not-paid') {
+      setPaymentType(prev => (prev === 'not-paid' ? undefined : 'not-paid'));
+    } else {
+      setPaymentType(prev => (prev === method || prev === 'not-paid' ? undefined : method));
+    }
     setErrors(prev => ({...prev, paymentType: false}));
   };
 
@@ -208,12 +215,12 @@ export default function SalesPage() {
             <form className="space-y-4" onSubmit={handleAddSale}>
               <div className="grid gap-2">
                 <Label htmlFor="service-type">Service Type</Label>
-                <Select value={serviceType} onValueChange={(v) => { setServiceType(v); setErrors(p => ({...p, serviceType: false}))}} disabled={noStaff}>
-                  <SelectTrigger id="service-type" data-invalid={errors.serviceType ? 'true' : 'false'}>
+                <Select value={serviceId} onValueChange={(v) => { setServiceId(v); setErrors(p => ({...p, serviceId: false}))}} disabled={noStaff}>
+                  <SelectTrigger id="service-type" data-invalid={errors.serviceId ? 'true' : undefined}>
                     <SelectValue placeholder="Select a service" />
                   </SelectTrigger>
                   <SelectContent>
-                    {services?.map((srv) => (
+                    {services?.filter(s => s.id !== 'wax-add-on').map((srv) => (
                       <SelectItem key={srv.id} value={srv.id}>{srv.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -224,9 +231,9 @@ export default function SalesPage() {
                 <div className="grid gap-2">
                   <Label htmlFor="car-size">Car Size</Label>
                   <Select value={carSize} onValueChange={(v) => { setCarSize(v); setErrors(p => ({...p, carSize: false}))}} disabled={noStaff || !serviceConfig?.needsSize}>
-                    <SelectTrigger id="car-size" data-invalid={errors.carSize ? 'true' : 'false'}><SelectValue placeholder="Select car size" /></SelectTrigger>
+                    <SelectTrigger id="car-size" data-invalid={errors.carSize ? 'true' : undefined}><SelectValue placeholder="Select car size" /></SelectTrigger>
                     <SelectContent>
-                      {carSizes.map(size => (
+                      {carSizes.sort((a,b) => serviceConfig.prices[a].price - serviceConfig.prices[b].price).map(size => (
                         <SelectItem key={size} value={size} className="capitalize">{size.replace('-', ' ')}</SelectItem>
                       ))}
                     </SelectContent>
@@ -237,7 +244,7 @@ export default function SalesPage() {
               <div className="grid gap-2">
                 <Label htmlFor="staff-member">Staff Member</Label>
                 <Select value={staffId} onValueChange={(v) => { setStaffId(v); setErrors(p => ({...p, staffId: false}))}} disabled={noStaff}>
-                  <SelectTrigger id="staff-member" data-invalid={errors.staffId ? 'true' : 'false'}>
+                  <SelectTrigger id="staff-member" data-invalid={errors.staffId ? 'true' : undefined}>
                     <SelectValue placeholder={staffLoading ? "Loading..." : "Select staff"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -260,11 +267,11 @@ export default function SalesPage() {
               {showWaxOption && (
                 <div className="flex items-center space-x-2 pt-2">
                   <Checkbox id="wax-add-on" checked={waxAddOn} onCheckedChange={(c) => setWaxAddOn(!!c)} disabled={noStaff} />
-                  <Label htmlFor="wax-add-on" className="cursor-pointer flex items-center">Wax Add-on (+5.00 <Image src="/sar.png" alt="SAR" width={12} height={12} className="mx-1" />)</Label>
+                  <Label htmlFor="wax-add-on" className="cursor-pointer flex items-center">Wax Add-on (+{services?.find(s => s.id === 'wax-add-on')?.prices['default']?.price || 0} <Image src="/sar.png" alt="SAR" width={12} height={12} className="mx-1" />)</Label>
                 </div>
               )}
 
-              <div className="grid gap-3 pt-2 border-t" data-invalid={errors.paymentType ? 'true' : 'false'}>
+              <div className="grid gap-3 pt-2 border-t" data-invalid={errors.paymentType ? 'true' : undefined}>
                 <Label className="font-semibold">Payment Method</Label>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                   {serviceConfig?.hasCoupon && (

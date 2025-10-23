@@ -1,11 +1,12 @@
 'use client';
-import { collection, getDocs, writeBatch, Firestore } from 'firebase/firestore';
+import { collection, doc, getDocs, writeBatch, Firestore } from 'firebase/firestore';
 
 export const SERVICE_TYPES = {
     'full-wash': {
         name: 'Full Wash',
         needsSize: true,
         hasCoupon: true,
+        order: 1,
         prices: {
             small: { price: 20, commission: 8, couponCommission: 4 },
             medium: { price: 25, commission: 10, couponCommission: 5 },
@@ -20,6 +21,7 @@ export const SERVICE_TYPES = {
         name: 'Outside Only',
         needsSize: true,
         hasCoupon: false,
+        order: 2,
         prices: {
             small: { price: 15, commission: 6 },
             medium: { price: 20, commission: 8 },
@@ -34,10 +36,20 @@ export const SERVICE_TYPES = {
         name: 'Interior Only',
         needsSize: false,
         hasCoupon: false,
+        order: 3,
         prices: {
             default: { price: 15, commission: 7 },
         },
     },
+    'wax-add-on': {
+        name: 'Wax Add-on',
+        needsSize: false,
+        hasCoupon: false,
+        order: 4,
+        prices: {
+            default: { price: 5, commission: 2 },
+        }
+    }
 };
 
 // This function will set up the default services in Firestore if they don't exist.
@@ -50,14 +62,7 @@ export async function seedDefaultServices(db: Firestore) {
     const batch = writeBatch(db);
     Object.entries(SERVICE_TYPES).forEach(([id, serviceData]) => {
       const docRef = doc(servicesCollection, id);
-      const data = {
-        name: serviceData.name,
-        needsSize: serviceData.needsSize,
-        hasCoupon: serviceData.hasCoupon,
-        prices: serviceData.prices,
-        order: Object.keys(SERVICE_TYPES).indexOf(id) // Add order for consistent display
-      };
-      batch.set(docRef, data);
+      batch.set(docRef, serviceData);
     });
     await batch.commit();
     console.log('Default services have been seeded.');
