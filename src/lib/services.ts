@@ -41,11 +41,65 @@ export const SERVICE_TYPES = {
             default: { price: 15, commission: 7 },
         },
     },
+    'water-only': {
+        name: 'Water Only',
+        needsSize: false,
+        hasCoupon: false,
+        order: 4,
+        prices: {
+            default: { price: 10, commission: 4 },
+        },
+    },
+    'engine-wash-only': {
+        name: 'Engine Wash Only',
+        needsSize: false,
+        hasCoupon: false,
+        order: 5,
+        prices: {
+            default: { price: 25, commission: 10 },
+        },
+    },
+    'mirrors-only': {
+        name: 'Mirrors Only',
+        needsSize: false,
+        hasCoupon: false,
+        order: 6,
+        prices: {
+            default: { price: 5, commission: 2 },
+        },
+    },
+    'carpets-covering': {
+        name: 'Carpets Covering',
+        needsSize: false,
+        hasCoupon: false,
+        order: 7,
+        prices: {
+            default: { price: 5, commission: 2 },
+        },
+    },
+    'carpet-cleaning': {
+        name: 'Carpet Cleaning',
+        needsSize: false,
+        hasCoupon: false,
+        order: 8,
+        prices: {
+            default: { price: 20, commission: 8 },
+        },
+    },
+    'air-conditioner-wash': {
+        name: 'Air Conditioner Wash',
+        needsSize: false,
+        hasCoupon: false,
+        order: 9,
+        prices: {
+            default: { price: 30, commission: 12 },
+        },
+    },
     'wax-add-on': {
         name: 'Wax Add-on',
         needsSize: false,
         hasCoupon: false,
-        order: 4,
+        order: 10,
         prices: {
             default: { price: 5, commission: 2 },
         }
