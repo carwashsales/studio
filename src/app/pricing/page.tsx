@@ -28,6 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { seedDefaultServices } from '@/lib/services';
 
 
 const EditableCell = ({ value, onSave, isEditable = true }: { value: number; onSave: (newValue: number) => void, isEditable?: boolean }) => {
@@ -71,6 +72,7 @@ export default function PricingPage() {
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const [isSeeding, setIsSeeding] = React.useState(false);
 
   const servicesQuery = useMemoFirebase(
     () => (firestore && user ? query(collection(firestore, 'users', user.uid, 'services'), orderBy('order')) : null),
@@ -83,6 +85,22 @@ export default function PricingPage() {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
+
+  React.useEffect(() => {
+    const handleSeeding = async () => {
+        if (firestore && user && !isLoading && services && services.length === 0 && !isSeeding) {
+            setIsSeeding(true);
+            toast({
+                title: 'Setting up your services...',
+                description: 'Please wait while we create the default service prices for your account.',
+            });
+            await seedDefaultServices(firestore, user.uid);
+            // Data will be re-fetched by useCollection automatically.
+            setIsSeeding(false);
+        }
+    };
+    handleSeeding();
+  }, [firestore, user, services, isLoading, isSeeding, toast]);
   
   const handleUpdate = (serviceId: string, updatedData: Partial<ServicePrice>) => {
     if (!firestore || !user) return;
@@ -94,7 +112,7 @@ export default function PricingPage() {
     });
   };
 
-  if (isUserLoading || !user || isLoading) {
+  if (isUserLoading || !user || isLoading || isSeeding) {
     return <div>Loading...</div>;
   }
 
@@ -151,7 +169,7 @@ export default function PricingPage() {
                          />
                       </TableCell>
                       <TableCell className="text-right">
-                        {service.hasCoupon && details.couponCommission !== undefined ? (
+                        {service.hasCoupon ? (
                            <EditableCell 
                               value={details.couponCommission ?? 0}
                               onSave={(newValue) => handleUpdate(service.id, { prices: { ...service.prices, [size]: { ...details, couponCommission: newValue } } })}

@@ -21,7 +21,6 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter } from 'next/navigation';
-import { SarIcon } from "./ui/sar-icon";
 
 export default function Header() {
   const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar-1');
@@ -29,10 +28,20 @@ export default function Header() {
   const auth = useAuth();
   const router = useRouter();
 
-  const handleLogout = () => {
-    signOut(auth);
-    router.push('/login');
+  const handleLogout = async () => {
+    if (auth) {
+      await signOut(auth);
+      router.push('/login');
+    }
   };
+  
+  const handleLogin = () => {
+    router.push('/login');
+  }
+
+  const handleRegister = () => {
+    router.push('/register');
+  }
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur-sm px-4 md:px-8">
@@ -66,11 +75,11 @@ export default function Header() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem disabled>
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem disabled>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
@@ -82,10 +91,10 @@ export default function Header() {
               </>
             ) : (
               <>
-                <DropdownMenuItem onClick={() => router.push('/login')}>
+                <DropdownMenuItem onClick={handleLogin}>
                   <span>Login</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/register')}>
+                <DropdownMenuItem onClick={handleRegister}>
                   <span>Register</span>
                 </DropdownMenuItem>
               </>

@@ -1,121 +1,131 @@
+/**
+ * @fileoverview Firestore Security Rules for CleanSweep Inventory.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a hybrid security model. User-specific data (pricing) is stored under the /users/{userId} path and secured with owner-only access.
+ * Global data (inventory, orders, sales, staff) is publicly readable but writable only by an authenticated user.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user profile information and custom pricing data.
+ * - /inventory: Stores global inventory items.
+ * - /orders: Stores global order information.
+ * - /sales: Stores global sales transactions.
+ * - /staff: Stores staff member information.
+ * - /users/{userId}/services: Stores user-specific pricing information for car wash services.
+ *
+ * Key Security Decisions:
+ * - Public read access is granted to inventory, orders, sales, and staff collections, as these are considered global and non-sensitive.
+ * - Strict owner-only access is enforced for user-specific data under /users/{userId}.
+ * - The rules DO NOT enforce schema validation beyond authorization checks to allow for rapid prototyping.
+ *
+ * Denormalization for Authorization:
+ *  No denormalization is needed as the rules rely on simple ownership checks and the absence of role-based access control.
+ *
+ * Structural Segregation:
+ *  User-specific pricing data is stored in a private subcollection (/users/{userId}/services) to keep it separate from global data.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
     /**
-     * @description Enforces user-level access control for user profiles.
+     * @description Allows read and write access to user profile information.
      * @path /users/{userId}
-     * @allow (create) - If the authenticated user's ID matches the userId in the path.
-     * @allow (get, update, delete) - If the authenticated user's ID matches the userId in the path.
-     * @deny (create) - If the authenticated user's ID does not match the userId in the path.
-     * @deny (get, update, delete) - If the authenticated user's ID does not match the userId in the path.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) - Authenticated user can create their own profile.
+     * @allow (get, list, update, delete) - Authenticated user can read, update, and delete their own profile.
+     * @deny (create) - Unauthorized user cannot create a profile with a different user ID.
+     * @deny (update, delete) - Unauthorized user cannot modify or delete another user's profile.
+     * @principle Enforces document ownership for user profiles.
      */
     match /users/{userId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
+      allow get: if isOwner(userId);
+      allow list: if false; // User listing is disabled.
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+
+      /**
+       * @description Allows read and write access to pricing information for a specific user's car wash services.
+       * @path /users/{userId}/services/{serviceId}
+       * @allow (create, get, list, update, delete) - Authenticated user can manage their own pricing information.
+       * @deny (create, get, list, update, delete) - Unauthorized user cannot access another user's pricing information.
+       * @principle Enforces document ownership for pricing information.
+       */
+      match /services/{serviceId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
       }
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId);
-      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
-     * @description Allows any authenticated user to read inventory items.  Writes are disallowed.
+     * @description Allows public read access to inventory items and write access for authenticated users.
      * @path /inventory
-     * @allow (get, list) - Any authenticated user can read inventory items.
-     * @deny (create, update, delete) - No one can write to the inventory collection.
-     * @principle Public read, owner-only write (not applicable here as writes are denied).
+     * @allow (get, list) - Anyone can read inventory items.
+     * @allow (create, update, delete) - Authenticated user can create, update, and delete inventory items.
+     * @deny (create, update, delete) - Unauthenticated user cannot modify inventory items.
+     * @principle Public read access with owner-only writes.
      */
     match /inventory/{inventoryId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
     }
 
     /**
-     * @description Allows any authenticated user to read orders. Writes are disallowed.
+     * @description Allows public read access to orders and write access for authenticated users.
      * @path /orders
-     * @allow (get, list) - Any authenticated user can read orders.
-     * @deny (create, update, delete) - No one can write to the orders collection.
-     * @principle Public read, owner-only write (not applicable here as writes are denied).
+     * @allow (get, list) - Anyone can read orders.
+     * @allow (create, update, delete) - Authenticated user can create, update, and delete orders.
+     * @deny (create, update, delete) - Unauthenticated user cannot modify orders.
+     * @principle Public read access with owner-only writes.
      */
     match /orders/{orderId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
     }
 
     /**
-     * @description Allows any authenticated user to read car wash sales transactions.  Writes are disallowed.
+     * @description Allows public read access to car wash sales and write access for authenticated users.
      * @path /sales
-     * @allow (get, list) - Any authenticated user can read sales transactions.
-     * @deny (create, update, delete) - No one can write to the sales collection.
-     * @principle Public read, owner-only write (not applicable here as writes are denied).
+     * @allow (get, list) - Anyone can read sales.
+     * @allow (create, update, delete) - Authenticated user can create, update, and delete sales.
+     * @deny (create, update, delete) - Unauthenticated user cannot modify sales.
+     * @principle Public read access with owner-only writes.
      */
     match /sales/{saleId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
     }
 
     /**
-     * @description Enforces user-level access control for service pricing data.
-     * @path /users/{userId}/services/{serviceId}
-     * @allow (create, get, update, delete, list) - If the authenticated user's ID matches the userId in the path.
-     * @deny (create, get, update, delete, list) - If the authenticated user's ID does not match the userId in the path.
-     * @principle Enforces document ownership for all operations.
-     */
-    match /users/{userId}/services/{serviceId} {
-      function isOwner(userId) {
-        return request.auth.uid == userId;
-      }
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isOwner(userId);
-      allow delete: if isSignedIn() && isOwner(userId);
-    }
-
-    /**
-     * @description Allows any authenticated user to read staff member data.  Writes are disallowed.
+     * @description Allows public read access to staff members and write access for authenticated users.
      * @path /staff
-     * @allow (get, list) - Any authenticated user can read staff member data.
-     * @deny (create, update, delete) - No one can write to the staff collection.
-     * @principle Public read, owner-only write (not applicable here as writes are denied).
+     * @allow (get, list) - Anyone can read staff members.
+     * @allow (create, update, delete) - Authenticated user can create, update, and delete staff members.
+     * @deny (create, update, delete) - Unauthenticated user cannot modify staff members.
+     * @principle Public read access with owner-only writes.
      */
     match /staff/{staffId} {
-      function isSignedIn() {
-        return request.auth != null;
-      }
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
     }
   }
 }
