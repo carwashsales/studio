@@ -68,7 +68,15 @@
       "properties": {
         "service": {
           "type": "string",
-          "description": "Type of car wash service provided (e.g., basic, deluxe, premium)."
+          "description": "Name of the car wash service provided."
+        },
+        "staffName": {
+            "type": "string",
+            "description": "Name of the staff member who performed the service."
+        },
+        "carSize": {
+            "type": "string",
+            "description": "Size of the car (e.g., small, medium, large)."
         },
         "date": {
           "type": "string",
@@ -78,12 +86,37 @@
         "amount": {
           "type": "number",
           "description": "Price of the car wash service."
+        },
+        "commission": {
+            "type": "number",
+            "description": "Commission earned by the staff member for the service."
+        },
+        "hasCoupon": {
+            "type": "boolean",
+            "description": "Whether a coupon was used for the sale."
+        },
+        "paymentMethod": {
+            "type": "string",
+            "description": "Method of payment (e.g., coupon, cash, machine, not-paid)."
+        },
+        "waxAddOn": {
+            "type": "boolean",
+            "description": "Whether the wax add-on was included."
+        },
+        "isPaid": {
+            "type": "boolean",
+            "description": "Whether the service has been paid for."
         }
       },
       "required": [
         "service",
+        "staffName",
         "date",
-        "amount"
+        "amount",
+        "commission",
+        "hasCoupon",
+        "waxAddOn",
+        "isPaid"
       ]
     },
     "Price": {
@@ -108,6 +141,21 @@
       "required": [
         "name",
         "price"
+      ]
+    },
+    "Staff": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Staff",
+      "type": "object",
+      "description": "Represents a staff member.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the staff member."
+        }
+      },
+      "required": [
+        "name"
       ]
     }
   },
@@ -146,8 +194,15 @@
           "$ref": "#/entities/Price"
         },
         "description": "Stores pricing information for car wash services. Each document represents the price for a specific service."
+      },
+      {
+        "path": "staff",
+        "schema": {
+          "$ref": "#/entities/Staff"
+        },
+        "description": "Stores staff members. Each document represents a single staff member."
       }
     ],
-    "reasoning": "The Firestore structure is designed to manage inventory, orders, sales, and pricing for the CleanSweep Inventory application. It prioritizes authorization independence and data clarity. User authentication is handled via email/password and anonymous login. Since all data is essentially private to the application's management, a single level collection is used for each major entity. This simplifies security rules, as access control is primarily based on user authentication rather than complex hierarchical ownership. CarWashSales and Prices are global data. The other collections could be scoped under an organization ID."
+    "reasoning": "The Firestore structure is designed to manage inventory, orders, sales, pricing and staff for the CleanSweep Inventory application. It prioritizes authorization independence and data clarity. User authentication is handled via email/password and anonymous login. Since all data is essentially private to the application's management, a single level collection is used for each major entity. This simplifies security rules, as access control is primarily based on user authentication rather than complex hierarchical ownership."
   }
 }

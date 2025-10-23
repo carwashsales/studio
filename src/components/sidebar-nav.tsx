@@ -20,9 +20,9 @@ import {
     FileText,
     Car,
     Settings,
-    HelpCircle
+    HelpCircle,
+    Users
 } from "lucide-react";
-import { Button } from "./ui/button";
 
 const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -31,6 +31,7 @@ const navItems = [
     { href: "/sales", label: "Sales", icon: DollarSign },
     { href: "/pricing", label: "Pricing", icon: Tag },
     { href: "/reports", label: "Reports", icon: FileText },
+    { href: "/staff", label: "Staff", icon: Users },
 ];
 
 export default function SidebarNav() {

@@ -1,4 +1,5 @@
 'use client';
+import * as React from 'react';
 import {
   Card,
   CardContent,
@@ -14,38 +15,21 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import * as React from 'react';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection } from 'firebase/firestore';
-import type { Price } from '@/types';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@/firebase';
 import Image from 'next/image';
+import { SERVICE_TYPES } from '@/lib/services';
+import { Badge } from '@/components/ui/badge';
 
 export default function PricingPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
-  const firestore = useFirestore();
 
   React.useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
-
-  const servicesCollection = useMemoFirebase(
-    () => (firestore && user ? collection(firestore, 'services') : null),
-    [firestore, user]
-  );
-  const { data: services, isLoading } = useCollection<Price>(servicesCollection);
 
   if (isUserLoading || !user) {
     return <div>Loading...</div>;
@@ -54,63 +38,52 @@ export default function PricingPage() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div>
-            <CardTitle className="font-headline">Service Pricing</CardTitle>
-            <CardDescription>
-              Manage and update pricing for your car wash services.
-            </CardDescription>
-          </div>
-          <Button size="sm" className="h-8 gap-1">
-            <PlusCircle className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Add Service
-            </span>
-          </Button>
+        <div>
+          <CardTitle className="font-headline">Service Pricing</CardTitle>
+          <CardDescription>
+            A breakdown of car wash services and their pricing structure.
+          </CardDescription>
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Service Name</TableHead>
-              <TableHead className="hidden sm:table-cell">Description</TableHead>
-              <TableHead className="text-right">Price</TableHead>
-              <TableHead>
-                <span className="sr-only">Actions</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={4}>Loading...</TableCell></TableRow>}
-            {services && services.map((service) => (
-              <TableRow key={service.id}>
-                <TableCell className="font-medium">{service.name}</TableCell>
-                <TableCell className="hidden sm:table-cell">
-                  {service.description}
-                </TableCell>
-                <TableCell className="text-right flex justify-end items-center">
-                  {service.price.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>Edit Price</DropdownMenuItem>
-                      <DropdownMenuItem>Remove Service</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <div className="space-y-6">
+          {Object.entries(SERVICE_TYPES).map(([key, service]) => (
+            <div key={key}>
+              <h3 className="text-lg font-semibold font-headline mb-2">{service.name}</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{service.needsSize ? 'Car Size' : 'Service'}</TableHead>
+                    <TableHead className="text-right">Price</TableHead>
+                    <TableHead className="text-right">Commission</TableHead>
+                    {service.hasCoupon && <TableHead className="text-right">Coupon Commission</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.entries(service.prices).map(([size, details]) => (
+                    <TableRow key={size}>
+                      <TableCell className="font-medium capitalize">{size === 'default' ? service.name : size}</TableCell>
+                      <TableCell className="text-right flex justify-end items-center">
+                        {details.price.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
+                      </TableCell>
+                       <TableCell className="text-right flex justify-end items-center">
+                        {details.commission.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
+                      </TableCell>
+                      {service.hasCoupon && (
+                        <TableCell className="text-right flex justify-end items-center">
+                           {details.couponCommission !== undefined ?
+                            <>{details.couponCommission.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" /></>
+                            : <Badge variant="outline">N/A</Badge>
+                           }
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

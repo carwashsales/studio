@@ -17,8 +17,15 @@ export type Order = {
 export type CarWashSale = {
   id: string;
   service: string;
+  staffName: string;
+  carSize?: string;
   date: string; // ISO 8601 date string
   amount: number;
+  commission: number;
+  hasCoupon: boolean;
+  paymentMethod?: 'coupon' | 'cash' | 'machine' | 'not-paid';
+  waxAddOn: boolean;
+  isPaid: boolean;
 };
 
 export type Price = {
@@ -26,6 +33,11 @@ export type Price = {
   name: string;
   description: string;
   price: number;
+};
+
+export type Staff = {
+  id: string;
+  name: string;
 };
 
 export type Activity = {
