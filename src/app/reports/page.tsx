@@ -32,8 +32,6 @@ import { collection } from "firebase/firestore";
 import type { InventoryItem, Order, CarWashSale } from "@/types";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
-import { SERVICE_TYPES } from "@/lib/services";
-
 
 const usageChartConfig = {
   quantity: { label: "Quantity", color: "hsl(var(--primary))" },
@@ -49,14 +47,13 @@ const salesPieChartConfig = {
   "Interior Only": { label: "Interior Only", color: "hsl(var(--chart-3))" },
   "Water Only": { label: "Water Only", color: "hsl(var(--chart-4))" },
   "Engine Wash Only": { label: "Engine Wash Only", color: "hsl(var(--chart-5))" },
-  "Mirrors Only": { label: "Mirrors Only", color: "hsl(var(--primary))" },
-  "Carpets Covering": { label: "Carpets Covering", color: "hsl(var(--accent))" },
-  "Carpet Cleaning": { label: "Carpet Cleaning", color: "hsl(207, 70%, 53%)" },
-  "Air Conditioner Wash": { label: "Air Conditioner Wash", color: "hsl(145, 63%, 49%)" },
-  "Wax Add-on": { label: "Wax Add-on", color: "hsl(43, 74%, 66%)" },
+  "Mirrors Only": { label: "Mirrors Only", color: "hsl(207, 70%, 80%)" },
+  "Carpets Covering": { label: "Carpets Covering", color: "hsl(145, 63%, 70%)" },
+  "Carpet Cleaning": { label: "Carpet Cleaning", color: "hsl(43, 74%, 80%)" },
+  "Air Conditioner Wash": { label: "Air Conditioner Wash", color: "hsl(27, 87%, 80%)" },
+  "Wax Add-on": { label: "Wax Add-on", color: "hsl(340, 75%, 80%)" },
   "Other": { label: "Other", color: "hsl(var(--muted))" },
 } satisfies ChartConfig;
-
 
 export default function ReportsPage() {
   const { user, isUserLoading } = useUser();
@@ -113,9 +110,6 @@ export default function ReportsPage() {
     }));
   }, [sales]);
 
-
-  // A simple mapping of item quantity for usage.
-  // A real app might calculate usage differently.
   const inventoryUsageData = React.useMemo(() => {
     return inventoryItems || [];
   }, [inventoryItems]);
