@@ -1,133 +1,118 @@
-/**
- * @fileoverview Firestore Security Rules for CleanSweep Inventory application.
- *
- * Core Philosophy:
- * This ruleset enforces a combination of role-based access control (for global collections) and strict user-ownership (for user-specific data).
- *
- * Data Structure:
- * - /users/{userId}: Stores user profiles, accessible only to the user themselves.
- * - /inventory: Stores global inventory data, readable by all users.  Write access is denied (currently).
- * - /orders: Stores global order data, readable by all users. Write access is denied (currently).
- * - /sales: Stores global sales data, readable by all users. Write access is denied (currently).
- * - /users/{userId}/services: Stores pricing data specific to a user, accessible only by that user.
- * - /staff: Stores staff member data, readable by all users.  Write access is denied (currently).
- *
- * Key Security Decisions:
- * - User listing is explicitly denied for privacy.
- * - Global collections (inventory, orders, sales, staff) are read-only for all users in this prototype.  Write access is not defined but denied by default.
- * - User subcollections (e.g., /users/{userId}/services) are strictly owned by the user, preventing cross-user data access.
- *
- * Denormalization for Authorization:
- *  None.  The current ruleset relies primarily on path-based authorization (e.g., /users/{userId}/...) and does not require denormalizing data onto documents.
- *
- * Structural Segregation:
- *  User-specific data (pricing) is stored in a subcollection under /users/{userId}, while global data (inventory, orders, sales) resides in top-level collections. This segregation simplifies access control.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows a user to read and write their own profile data.
-     * @path /databases/{database}/documents/users/{userId}
-     * @allow (create) - Authenticated user can create their own profile.
-     * @allow (get, list, update, delete) - Authenticated user can read, update and delete their own profile.
-     * @deny (create) - If the user id in the path does not match the authenticated user's id.
-     * @deny (get, list, update, delete) - If the user id in the path does not match the authenticated user's id.
+     * @description Enforces user-level access control for user profiles.
+     * @path /users/{userId}
+     * @allow (create) - If the authenticated user's ID matches the userId in the path.
+     * @allow (get, update, delete) - If the authenticated user's ID matches the userId in the path.
+     * @deny (create) - If the authenticated user's ID does not match the userId in the path.
+     * @deny (get, update, delete) - If the authenticated user's ID does not match the userId in the path.
      * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
       function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
+        return request.auth.uid == userId;
       }
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
+      function isSignedIn() {
+        return request.auth != null;
       }
-      allow get: if isOwner(userId);
+      allow get: if isSignedIn() && isOwner(userId);
       allow list: if false;
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
-     * @description Allows any user to read inventory data. Write access is denied.
-     * @path /databases/{database}/documents/inventory/{inventoryId}
-     * @allow (get, list) - Any user can read inventory data.
-     * @deny (create, update, delete) - No user can create, update, or delete inventory data.
-     * @principle Grants public read access while restricting write access.
+     * @description Allows any authenticated user to read inventory items.  Writes are disallowed.
+     * @path /inventory
+     * @allow (get, list) - Any authenticated user can read inventory items.
+     * @deny (create, update, delete) - No one can write to the inventory collection.
+     * @principle Public read, owner-only write (not applicable here as writes are denied).
      */
     match /inventory/{inventoryId} {
-      allow get: if true;
-      allow list: if true;
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
 
     /**
-     * @description Allows any user to read order data. Write access is denied.
-     * @path /databases/{database}/documents/orders/{orderId}
-     * @allow (get, list) - Any user can read order data.
-     * @deny (create, update, delete) - No user can create, update, or delete order data.
-     * @principle Grants public read access while restricting write access.
+     * @description Allows any authenticated user to read orders. Writes are disallowed.
+     * @path /orders
+     * @allow (get, list) - Any authenticated user can read orders.
+     * @deny (create, update, delete) - No one can write to the orders collection.
+     * @principle Public read, owner-only write (not applicable here as writes are denied).
      */
     match /orders/{orderId} {
-      allow get: if true;
-      allow list: if true;
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
 
     /**
-     * @description Allows any user to read sales data. Write access is denied.
-     * @path /databases/{database}/documents/sales/{saleId}
-     * @allow (get, list) - Any user can read sales data.
-     * @deny (create, update, delete) - No user can create, update, or delete sales data.
-     * @principle Grants public read access while restricting write access.
+     * @description Allows any authenticated user to read car wash sales transactions.  Writes are disallowed.
+     * @path /sales
+     * @allow (get, list) - Any authenticated user can read sales transactions.
+     * @deny (create, update, delete) - No one can write to the sales collection.
+     * @principle Public read, owner-only write (not applicable here as writes are denied).
      */
     match /sales/{saleId} {
-      allow get: if true;
-      allow list: if true;
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
 
     /**
-     * @description Allows a user to manage their own service pricing data.
-     * @path /databases/{database}/documents/users/{userId}/services/{serviceId}
-     * @allow (create) - Authenticated user can create service under their own id.
-     * @allow (get, list, update, delete) - Authenticated user can read, update and delete services under their own id.
-     * @deny (create) - If the user id in the path does not match the authenticated user's id.
-     * @deny (get, list, update, delete) - If the user id in the path does not match the authenticated user's id.
+     * @description Enforces user-level access control for service pricing data.
+     * @path /users/{userId}/services/{serviceId}
+     * @allow (create, get, update, delete, list) - If the authenticated user's ID matches the userId in the path.
+     * @deny (create, get, update, delete, list) - If the authenticated user's ID does not match the userId in the path.
      * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/services/{serviceId} {
       function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
+        return request.auth.uid == userId;
       }
-      function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
+      function isSignedIn() {
+        return request.auth != null;
       }
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
-     * @description Allows any user to read staff data. Write access is denied.
-     * @path /databases/{database}/documents/staff/{staffId}
-     * @allow (get, list) - Any user can read staff data.
-     * @deny (create, update, delete) - No user can create, update, or delete staff data.
-     * @principle Grants public read access while restricting write access.
+     * @description Allows any authenticated user to read staff member data.  Writes are disallowed.
+     * @path /staff
+     * @allow (get, list) - Any authenticated user can read staff member data.
+     * @deny (create, update, delete) - No one can write to the staff collection.
+     * @principle Public read, owner-only write (not applicable here as writes are denied).
      */
     match /staff/{staffId} {
-      allow get: if true;
-      allow list: if true;
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if false;
       allow update: if false;
       allow delete: if false;

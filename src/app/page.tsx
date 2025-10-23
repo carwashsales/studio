@@ -75,9 +75,8 @@ export default function Dashboard() {
   const { data: pendingOrders } = useCollection<Order>(pendingOrdersQuery);
   const { data: recentSales } = useCollection<CarWashSale>(recentSalesQuery);
 
-  const totalInventoryValue = React.useMemo(() => {
-    // This is a placeholder calculation. A real app would need prices for each item.
-    return inventoryItems?.reduce((acc, item) => acc + item.quantity * 20, 0) || 0;
+  const totalInventoryItems = React.useMemo(() => {
+    return inventoryItems?.reduce((acc, item) => acc + item.quantity, 0) || 0;
   }, [inventoryItems]);
 
   const monthlySales = React.useMemo(() => {
@@ -97,20 +96,20 @@ export default function Dashboard() {
     <div className="grid gap-4 md:gap-8 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-          <Image src="/sar.png" alt="SAR" width={16} height={16} className="text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">Total Items</CardTitle>
+          <Package className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold flex items-center">{totalInventoryValue.toFixed(2)} <Image src="/sar.png" alt="SAR" width={24} height={24} className="ml-1" /></div>
+          <div className="text-2xl font-bold">{totalInventoryItems}</div>
           <p className="text-xs text-muted-foreground">
-            Estimated value of all items
+            Total items across all inventory
           </p>
         </CardContent>
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
-            Total Inventory
+            Unique Products
           </CardTitle>
           <Package className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
