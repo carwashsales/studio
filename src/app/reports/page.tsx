@@ -45,7 +45,7 @@ const salesPieChartConfig = {
   'Basic': { label: 'Basic', color: 'hsl(var(--chart-1))' },
   'Deluxe': { label: 'Deluxe', color: 'hsl(var(--chart-2))' },
   'Premium': { label: 'Premium', color: 'hsl(var(--chart-3))' },
-  'Interior Clean': { label: 'Interior Clean', color: 'hsl(var(--chart-4))' },
+  'Interior': { label: 'Interior Clean', color: 'hsl(var(--chart-4))' },
 } satisfies ChartConfig;
 
 export default function ReportsPage() {
