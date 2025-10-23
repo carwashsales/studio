@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Card,
@@ -6,7 +6,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -14,32 +14,73 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   ChartConfig,
-} from "@/components/ui/chart";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+} from '@/components/ui/chart';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import {
   DollarSign,
   Package,
   AlertTriangle,
   ShoppingCart,
-} from "lucide-react";
-
-import { recentActivities, salesData } from "@/lib/data";
+} from 'lucide-react';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, where, limit } from 'firebase/firestore';
+import type { InventoryItem, CarWashSale, Order } from '@/types';
+import { format } from 'date-fns';
+import React from 'react';
 
 const chartConfig = {
   sales: {
-    label: "Sales",
-    color: "hsl(var(--primary))",
+    label: 'Sales',
+    color: 'hsl(var(--primary))',
   },
 } satisfies ChartConfig;
 
 export default function Dashboard() {
+  const firestore = useFirestore();
+
+  const inventoryQuery = useMemoFirebase(() =>
+    firestore ? collection(firestore, 'inventory') : null
+  , [firestore]);
+  const lowStockQuery = useMemoFirebase(() =>
+    firestore ? query(collection(firestore, 'inventory'), where('quantity', '<', 10)) : null
+  , [firestore]);
+  const salesQuery = useMemoFirebase(() =>
+    firestore ? collection(firestore, 'sales') : null
+  , [firestore]);
+  const pendingOrdersQuery = useMemoFirebase(() =>
+    firestore ? query(collection(firestore, 'orders'), where('status', '==', 'Pending')) : null
+  , [firestore]);
+  const recentSalesQuery = useMemoFirebase(() =>
+    firestore ? query(collection(firestore, 'sales'), limit(5)) : null
+  , [firestore]);
+
+  const { data: inventoryItems } = useCollection<InventoryItem>(inventoryQuery);
+  const { data: lowStockItems } = useCollection<InventoryItem>(lowStockQuery);
+  const { data: salesData } = useCollection<CarWashSale>(salesQuery);
+  const { data: pendingOrders } = useCollection<Order>(pendingOrdersQuery);
+  const { data: recentSales } = useCollection<CarWashSale>(recentSalesQuery);
+
+  const totalInventoryValue = React.useMemo(() => {
+    // This is a placeholder calculation. A real app would need prices for each item.
+    return inventoryItems?.reduce((acc, item) => acc + item.quantity * 20, 0) || 0;
+  }, [inventoryItems]);
+
+  const monthlySales = React.useMemo(() => {
+    const salesByMonth: { [key: string]: number } = {};
+    salesData?.forEach(sale => {
+      const month = format(new Date(sale.date), 'MMM');
+      salesByMonth[month] = (salesByMonth[month] || 0) + sale.amount;
+    });
+    return Object.entries(salesByMonth).map(([month, sales]) => ({ month, sales }));
+  }, [salesData]);
+
   return (
     <div className="grid gap-4 md:gap-8 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
       <Card>
@@ -48,9 +89,9 @@ export default function Dashboard() {
           <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">$45,231.89</div>
+          <div className="text-2xl font-bold">${totalInventoryValue.toFixed(2)}</div>
           <p className="text-xs text-muted-foreground">
-            +20.1% from last month
+            Estimated value of all items
           </p>
         </CardContent>
       </Card>
@@ -62,9 +103,9 @@ export default function Dashboard() {
           <Package className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">1,257</div>
+          <div className="text-2xl font-bold">{inventoryItems?.length || 0}</div>
           <p className="text-xs text-muted-foreground">
-            Total items in stock
+            Total unique items in stock
           </p>
         </CardContent>
       </Card>
@@ -74,7 +115,7 @@ export default function Dashboard() {
           <AlertTriangle className="h-4 w-4 text-destructive" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">12</div>
+          <div className="text-2xl font-bold">{lowStockItems?.length || 0}</div>
           <p className="text-xs text-muted-foreground">Items need reordering</p>
         </CardContent>
       </Card>
@@ -84,12 +125,12 @@ export default function Dashboard() {
           <ShoppingCart className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">+5</div>
+          <div className="text-2xl font-bold">{pendingOrders?.length || 0}</div>
           <p className="text-xs text-muted-foreground">New supply orders</p>
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:gap-8 lg:col-span-2 xl:col-span-4">
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:col-span-4">
         <Card className="xl:col-span-2">
           <CardHeader>
             <CardTitle className="font-headline">Sales Overview</CardTitle>
@@ -101,7 +142,7 @@ export default function Dashboard() {
             <ChartContainer config={chartConfig} className="h-[250px] w-full">
               <BarChart
                 accessibilityLayer
-                data={salesData}
+                data={monthlySales}
                 margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
               >
                 <CartesianGrid vertical={false} />
@@ -129,43 +170,32 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline">Recent Activity</CardTitle>
+            <CardTitle className="font-headline">Recent Sales</CardTitle>
             <CardDescription>
-              An overview of the latest inventory and sales activities.
+              An overview of the latest sales activities.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Activity</TableHead>
-                  <TableHead className="hidden sm:table-cell">Item/Service</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden md:table-cell">Date</TableHead>
+                  <TableHead>Service</TableHead>
+                  <TableHead className="hidden sm:table-cell">Date</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentActivities.map((activity) => (
+                {recentSales?.map((activity) => (
                   <TableRow key={activity.id}>
                     <TableCell className="font-medium">
-                      {activity.activity}
+                      {activity.service}
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell">{activity.item}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          activity.status === "Completed"
-                            ? "default"
-                            : activity.status === "Low Stock"
-                            ? "destructive"
-                            : "secondary"
-                        }
-                        className={activity.status === "Completed" ? "bg-accent text-accent-foreground" : ""}
-                      >
-                        {activity.status}
-                      </Badge>
+                    <TableCell className="hidden sm:table-cell">
+                      {format(new Date(activity.date), 'PPP')}
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">{activity.date}</TableCell>
+                    <TableCell className="text-right">
+                      ${activity.amount.toFixed(2)}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

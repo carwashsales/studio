@@ -1,12 +1,11 @@
-
-"use client";
+'use client';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -14,21 +13,70 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { sales, services } from "@/lib/data";
-import * as React from "react";
+} from '@/components/ui/select';
+import * as React from 'react';
+import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import type { CarWashSale, Price } from '@/types';
+import { format } from 'date-fns';
 
 export default function SalesPage() {
+  const firestore = useFirestore();
+  
+  const salesCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'sales') : null),
+    [firestore]
+  );
+  const servicesCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'services') : null),
+    [firestore]
+  );
+
+  const { data: sales, isLoading: salesLoading } = useCollection<CarWashSale>(salesCollection);
+  const { data: services, isLoading: servicesLoading } = useCollection<Price>(servicesCollection);
+
+  const [selectedService, setSelectedService] = React.useState('');
+  const [quantity, setQuantity] = React.useState(1);
+  const [totalPrice, setTotalPrice] = React.useState('');
+
+  React.useEffect(() => {
+    if (selectedService && services) {
+      const service = services.find(s => s.name === selectedService);
+      if (service) {
+        setTotalPrice((service.price * quantity).toFixed(2));
+      }
+    }
+  }, [selectedService, quantity, services]);
+
+  const handleAddSale = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!salesCollection || !selectedService || !totalPrice) return;
+
+    const newSale: Omit<CarWashSale, 'id'> = {
+      service: selectedService,
+      date: new Date().toISOString(),
+      amount: parseFloat(totalPrice),
+    };
+
+    addDocumentNonBlocking(salesCollection, newSale);
+    
+    // Reset form
+    setSelectedService('');
+    setQuantity(1);
+    setTotalPrice('');
+  };
+
+
   return (
     <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
       <div className="lg:col-span-1">
@@ -40,15 +88,16 @@ export default function SalesPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="grid gap-4">
+            <form className="grid gap-4" onSubmit={handleAddSale}>
               <div className="grid gap-2">
                 <Label htmlFor="service">Service Type</Label>
-                <Select>
+                <Select value={selectedService} onValueChange={setSelectedService}>
                   <SelectTrigger id="service">
                     <SelectValue placeholder="Select a service" />
                   </SelectTrigger>
                   <SelectContent>
-                    {services.map((service) => (
+                    {servicesLoading && <SelectItem value="loading" disabled>Loading...</SelectItem>}
+                    {services && services.map((service) => (
                       <SelectItem key={service.id} value={service.name}>
                         {service.name}
                       </SelectItem>
@@ -58,11 +107,11 @@ export default function SalesPage() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="quantity">Quantity</Label>
-                <Input id="quantity" type="number" defaultValue="1" />
+                <Input id="quantity" type="number" value={quantity} onChange={e => setQuantity(Number(e.target.value))} />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="price">Total Price</Label>
-                <Input id="price" type="number" placeholder="$0.00" />
+                <Input id="price" type="number" placeholder="$0.00" value={totalPrice} readOnly />
               </div>
               <Button type="submit" className="w-full bg-accent hover:bg-accent/90">
                 Add Sale
@@ -90,10 +139,13 @@ export default function SalesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sales.map((sale) => (
+                {salesLoading && <TableRow><TableCell colSpan={3}>Loading...</TableCell></TableRow>}
+                {sales && sales.map((sale) => (
                   <TableRow key={sale.id}>
                     <TableCell className="font-medium">{sale.service}</TableCell>
-                    <TableCell className="hidden sm:table-cell">{sale.date}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      {format(new Date(sale.date), 'PPP')}
+                    </TableCell>
                     <TableCell className="text-right">
                       ${sale.amount.toFixed(2)}
                     </TableCell>

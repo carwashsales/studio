@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import SidebarNav from "@/components/sidebar-nav";
 import Header from "@/components/header";
+import { FirebaseClientProvider } from "@/firebase/client-provider";
 
 export const metadata: Metadata = {
   title: "CleanSweep Inventory",
@@ -24,16 +25,18 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <Toaster />
-        <SidebarProvider>
-            <SidebarNav />
-            <SidebarInset>
-              <Header />
-              <div className="p-4 sm:p-6 lg:p-8">
-                {children}
-              </div>
-            </SidebarInset>
-        </SidebarProvider>
+        <FirebaseClientProvider>
+          <Toaster />
+          <SidebarProvider>
+              <SidebarNav />
+              <SidebarInset>
+                <Header />
+                <div className="p-4 sm:p-6 lg:p-8">
+                  {children}
+                </div>
+              </SidebarInset>
+          </SidebarProvider>
+        </FirebaseClientProvider>
       </body>
     </html>
   );

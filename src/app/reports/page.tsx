@@ -25,31 +25,84 @@ import {
   PieChart,
   Cell,
 } from "recharts";
-import { inventoryUsageData, costData, salesByServiceData } from "@/lib/data";
+import * as React from "react";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection } from "firebase/firestore";
+import type { InventoryItem, Order, CarWashSale } from "@/types";
+import { format } from "date-fns";
+
 
 const usageChartConfig = {
-  usage: { label: "Usage", color: "hsl(var(--primary))" },
+  quantity: { label: "Quantity", color: "hsl(var(--primary))" },
 } satisfies ChartConfig;
 
 const costChartConfig = {
-  cost: { label: "Cost", color: "hsl(var(--accent))" },
+  total: { label: "Cost", color: "hsl(var(--accent))" },
 } satisfies ChartConfig;
 
 const salesPieChartConfig = {
-  'Basic Wash': { label: 'Basic Wash', color: 'hsl(var(--chart-1))' },
-  'Deluxe Wash': { label: 'Deluxe Wash', color: 'hsl(var(--chart-2))' },
-  'Premium Detail': { label: 'Premium Detail', color: 'hsl(var(--chart-3))' },
+  'Basic': { label: 'Basic', color: 'hsl(var(--chart-1))' },
+  'Deluxe': { label: 'Deluxe', color: 'hsl(var(--chart-2))' },
+  'Premium': { label: 'Premium', color: 'hsl(var(--chart-3))' },
   'Interior Clean': { label: 'Interior Clean', color: 'hsl(var(--chart-4))' },
 } satisfies ChartConfig;
 
 export default function ReportsPage() {
+  const firestore = useFirestore();
+  const inventoryCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, "inventory") : null),
+    [firestore]
+  );
+  const ordersCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, "orders") : null),
+    [firestore]
+  );
+  const salesCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, "sales") : null),
+    [firestore]
+  );
+
+  const { data: inventoryItems } = useCollection<InventoryItem>(inventoryCollection);
+  const { data: orders } = useCollection<Order>(ordersCollection);
+  const { data: sales } = useCollection<CarWashSale>(salesCollection);
+
+  const costData = React.useMemo(() => {
+    if (!orders) return [];
+    const monthlyCosts: { [key: string]: number } = {};
+    orders.forEach((order) => {
+      const month = format(new Date(order.date), "MMM");
+      monthlyCosts[month] = (monthlyCosts[month] || 0) + order.total;
+    });
+    return Object.entries(monthlyCosts).map(([month, total]) => ({ month, total }));
+  }, [orders]);
+
+  const salesByServiceData = React.useMemo(() => {
+    if (!sales) return [];
+    const serviceSales: { [key: string]: number } = {};
+    sales.forEach((sale) => {
+      // Extract the base service name (e.g., "Basic" from "Basic Wash")
+      const serviceBaseName = sale.service.split(' ')[0];
+      serviceSales[serviceBaseName] = (serviceSales[serviceBaseName] || 0) + sale.amount;
+    });
+    return Object.entries(serviceSales).map(([service, sales]) => ({
+      service,
+      sales,
+    }));
+  }, [sales]);
+
+  // A simple mapping of item quantity for usage.
+  // A real app might calculate usage differently.
+  const inventoryUsageData = React.useMemo(() => {
+    return inventoryItems || [];
+  }, [inventoryItems]);
+
   return (
     <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Inventory Usage</CardTitle>
+          <CardTitle className="font-headline">Inventory Levels</CardTitle>
           <CardDescription>
-            Monthly usage of key inventory items.
+            Current stock levels of key inventory items.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -59,7 +112,7 @@ export default function ReportsPage() {
               <XAxis dataKey="name" tickLine={false} axisLine={false} />
               <YAxis tickLine={false} axisLine={false} />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="usage" fill="var(--color-usage)" radius={8} />
+              <Bar dataKey="quantity" fill="var(--color-quantity)" radius={8} />
             </BarChart>
           </ChartContainer>
         </CardContent>
@@ -79,8 +132,8 @@ export default function ReportsPage() {
               <ChartTooltip content={<ChartTooltipContent />} />
               <Line
                 type="monotone"
-                dataKey="cost"
-                stroke="var(--color-cost)"
+                dataKey="total"
+                stroke="var(--color-total)"
                 strokeWidth={2}
                 dot={false}
               />
@@ -111,7 +164,7 @@ export default function ReportsPage() {
                     strokeWidth={5}
                 >
                     {salesByServiceData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={salesPieChartConfig[entry.service as keyof typeof salesPieChartConfig]?.color} />
+                      <Cell key={`cell-${index}`} fill={salesPieChartConfig[entry.service as keyof typeof salesPieChartConfig]?.color || 'hsl(var(--muted))'} />
                     ))}
                 </Pie>
                 </PieChart>

@@ -1,12 +1,12 @@
+'use client';
 
-"use client";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -14,29 +14,34 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { orders } from "@/lib/data";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import * as React from "react";
+} from '@/components/ui/dropdown-menu';
+import * as React from 'react';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import type { Order } from '@/types';
+import { format } from 'date-fns';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
-    case "Received":
-      return <Badge className="bg-accent text-accent-foreground">{status}</Badge>;
-    case "Shipped":
+    case 'Received':
+      return (
+        <Badge className="bg-accent text-accent-foreground">{status}</Badge>
+      );
+    case 'Shipped':
       return <Badge variant="secondary">{status}</Badge>;
-    case "Pending":
+    case 'Pending':
       return <Badge variant="outline">{status}</Badge>;
-    case "Cancelled":
+    case 'Cancelled':
       return <Badge variant="destructive">{status}</Badge>;
     default:
       return <Badge>{status}</Badge>;
@@ -44,6 +49,13 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function OrdersPage() {
+  const firestore = useFirestore();
+  const ordersCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'orders') : null),
+    [firestore]
+  );
+  const { data: orders, isLoading } = useCollection<Order>(ordersCollection);
+
   return (
     <Card>
       <CardHeader>
@@ -77,12 +89,17 @@ export default function OrdersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orders.map((order) => (
+            {isLoading && <TableRow><TableCell colSpan={6}>Loading...</TableCell></TableRow>}
+            {orders && orders.map((order) => (
               <TableRow key={order.id}>
                 <TableCell className="font-medium">{order.id}</TableCell>
-                <TableCell className="hidden sm:table-cell">{order.supplier}</TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  {order.supplier}
+                </TableCell>
                 <TableCell>{getStatusBadge(order.status)}</TableCell>
-                <TableCell className="hidden md:table-cell">{order.date}</TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {format(new Date(order.date), 'PPP')}
+                </TableCell>
                 <TableCell className="text-right">
                   ${order.total.toFixed(2)}
                 </TableCell>

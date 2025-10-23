@@ -1,12 +1,11 @@
-
-"use client";
+'use client';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -14,20 +13,29 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { services } from "@/lib/data";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import * as React from "react";
+} from '@/components/ui/dropdown-menu';
+import * as React from 'react';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import type { Price } from '@/types';
 
 export default function PricingPage() {
+  const firestore = useFirestore();
+  const servicesCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'services') : null),
+    [firestore]
+  );
+  const { data: services, isLoading } = useCollection<Price>(servicesCollection);
+
   return (
     <Card>
       <CardHeader>
@@ -59,10 +67,13 @@ export default function PricingPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {services.map((service) => (
+            {isLoading && <TableRow><TableCell colSpan={4}>Loading...</TableCell></TableRow>}
+            {services && services.map((service) => (
               <TableRow key={service.id}>
                 <TableCell className="font-medium">{service.name}</TableCell>
-                <TableCell className="hidden sm:table-cell">{service.description}</TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  {service.description}
+                </TableCell>
                 <TableCell className="text-right">
                   ${service.price.toFixed(2)}
                 </TableCell>
