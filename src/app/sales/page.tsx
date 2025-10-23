@@ -25,21 +25,30 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import * as React from 'react';
-import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, useUser } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { CarWashSale, Price } from '@/types';
 import { format } from 'date-fns';
+import { useRouter } from 'next/navigation';
 
 export default function SalesPage() {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
   const firestore = useFirestore();
   
+  React.useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
+
   const salesCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'sales') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, 'sales') : null),
+    [firestore, user]
   );
   const servicesCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'services') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, 'services') : null),
+    [firestore, user]
   );
 
   const { data: sales, isLoading: salesLoading } = useCollection<CarWashSale>(salesCollection);
@@ -76,6 +85,9 @@ export default function SalesPage() {
     setTotalPrice('');
   };
 
+  if (isUserLoading || !user) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="grid gap-4 md:gap-8 lg:grid-cols-3">

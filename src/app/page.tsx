@@ -15,7 +15,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import {
   ChartContainer,
   ChartTooltip,
@@ -29,11 +28,12 @@ import {
   AlertTriangle,
   ShoppingCart,
 } from 'lucide-react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
 import type { InventoryItem, CarWashSale, Order } from '@/types';
 import { format } from 'date-fns';
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 const chartConfig = {
   sales: {
@@ -43,23 +43,31 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function Dashboard() {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
   const firestore = useFirestore();
 
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
+
   const inventoryQuery = useMemoFirebase(() =>
-    firestore ? collection(firestore, 'inventory') : null
-  , [firestore]);
+    firestore && user ? collection(firestore, 'inventory') : null
+  , [firestore, user]);
   const lowStockQuery = useMemoFirebase(() =>
-    firestore ? query(collection(firestore, 'inventory'), where('quantity', '<', 10)) : null
-  , [firestore]);
+    firestore && user ? query(collection(firestore, 'inventory'), where('quantity', '<', 10)) : null
+  , [firestore, user]);
   const salesQuery = useMemoFirebase(() =>
-    firestore ? collection(firestore, 'sales') : null
-  , [firestore]);
+    firestore && user ? collection(firestore, 'sales') : null
+  , [firestore, user]);
   const pendingOrdersQuery = useMemoFirebase(() =>
-    firestore ? query(collection(firestore, 'orders'), where('status', '==', 'Pending')) : null
-  , [firestore]);
+    firestore && user ? query(collection(firestore, 'orders'), where('status', '==', 'Pending')) : null
+  , [firestore, user]);
   const recentSalesQuery = useMemoFirebase(() =>
-    firestore ? query(collection(firestore, 'sales'), limit(5)) : null
-  , [firestore]);
+    firestore && user ? query(collection(firestore, 'sales'), limit(5)) : null
+  , [firestore, user]);
 
   const { data: inventoryItems } = useCollection<InventoryItem>(inventoryQuery);
   const { data: lowStockItems } = useCollection<InventoryItem>(lowStockQuery);
@@ -80,6 +88,10 @@ export default function Dashboard() {
     });
     return Object.entries(salesByMonth).map(([month, sales]) => ({ month, sales }));
   }, [salesData]);
+  
+  if (isUserLoading || !user) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="grid gap-4 md:gap-8 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">

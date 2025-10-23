@@ -26,10 +26,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import * as React from 'react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Order } from '@/types';
 import { format } from 'date-fns';
+import { useRouter } from 'next/navigation';
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -49,12 +50,25 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function OrdersPage() {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
   const firestore = useFirestore();
+  
+  React.useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
+
   const ordersCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'orders') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, 'orders') : null),
+    [firestore, user]
   );
   const { data: orders, isLoading } = useCollection<Order>(ordersCollection);
+
+  if (isUserLoading || !user) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <Card>

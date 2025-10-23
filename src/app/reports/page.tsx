@@ -26,10 +26,11 @@ import {
   Cell,
 } from "recharts";
 import * as React from "react";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection } from "firebase/firestore";
 import type { InventoryItem, Order, CarWashSale } from "@/types";
 import { format } from "date-fns";
+import { useRouter } from "next/navigation";
 
 
 const usageChartConfig = {
@@ -48,18 +49,27 @@ const salesPieChartConfig = {
 } satisfies ChartConfig;
 
 export default function ReportsPage() {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
   const firestore = useFirestore();
+  
+  React.useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
+
   const inventoryCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, "inventory") : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, "inventory") : null),
+    [firestore, user]
   );
   const ordersCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, "orders") : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, "orders") : null),
+    [firestore, user]
   );
   const salesCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, "sales") : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, "sales") : null),
+    [firestore, user]
   );
 
   const { data: inventoryItems } = useCollection<InventoryItem>(inventoryCollection);
@@ -95,6 +105,10 @@ export default function ReportsPage() {
   const inventoryUsageData = React.useMemo(() => {
     return inventoryItems || [];
   }, [inventoryItems]);
+
+  if (isUserLoading || !user) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="grid gap-4 md:gap-8 lg:grid-cols-2">

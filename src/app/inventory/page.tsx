@@ -27,7 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, PlusCircle, ListFilter } from 'lucide-react';
 import * as React from 'react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser, addDocumentNonBlocking } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { InventoryItem } from '@/types';
 import {
@@ -41,7 +41,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { addDocumentNonBlocking } from '@/firebase';
+import { useRouter } from 'next/navigation';
 
 const getStatusBadge = (quantity: number) => {
   if (quantity === 0) {
@@ -145,13 +145,26 @@ function AddItemDialog() {
 
 
 export default function InventoryPage() {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
   const firestore = useFirestore();
+
+  React.useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
+
   const inventoryCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'inventory') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, 'inventory') : null),
+    [firestore, user]
   );
   const { data: inventoryItems, isLoading } =
     useCollection<InventoryItem>(inventoryCollection);
+    
+  if (isUserLoading || !user) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <Card>

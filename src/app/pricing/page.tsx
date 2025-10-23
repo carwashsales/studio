@@ -24,17 +24,31 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import * as React from 'react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Price } from '@/types';
+import { useRouter } from 'next/navigation';
 
 export default function PricingPage() {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
   const firestore = useFirestore();
+
+  React.useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
+
   const servicesCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'services') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, 'services') : null),
+    [firestore, user]
   );
   const { data: services, isLoading } = useCollection<Price>(servicesCollection);
+
+  if (isUserLoading || !user) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <Card>

@@ -2,133 +2,100 @@
  * @fileoverview Firestore Security Rules for CleanSweep Inventory application.
  *
  * Core Philosophy:
- * This ruleset prioritizes simplicity and assumes all data is private to the application's management, meaning no public access.
- * All collections are treated as application-managed, requiring authentication for access.
- * In a production environment, these rules would need adjustment, potentially to scope the InventoryItem, Order, and OrderItem collections
- * under an organization id.
+ * This ruleset prioritizes simplicity and assumes all data is private to the application's management team.
+ * It enforces authentication for all write operations and currently allows public read access to `sales` data.
+ * Other collections are read restricted to authenticated users, though this might need further refinement based on usage.
  *
  * Data Structure:
- * The Firestore database consists of top-level collections for each entity:
- * - /inventory_items/{inventoryItemId}
- * - /orders/{orderId}
- * - /order_items/{orderItemId}
- * - /car_wash_sales/{carWashSaleId}
- * - /prices/{priceId}
+ * - /inventory: Stores inventory items.
+ * - /orders: Stores orders for new supplies.
+ * - /sales: Stores car wash sale transactions.
+ * - /services: Stores pricing information for car wash services.
  *
  * Key Security Decisions:
- * - No public access: All `get` and `list` operations require authentication.
- * - No schema enforcement: This prototyping ruleset focuses on authorization and skips detailed schema validation.
- * - Denormalization: No denormalization is strictly used in this ruleset, but the reasoning indicated that all collections might be scoped under an organization ID.
- * - Collections aren't designed to be world readable, so `list` operations are secured using authentication.
+ * - Public read access is granted to the `sales` collection to allow for unauthenticated reporting (subject to review).
+ * - All write operations require authentication.
+ * - Data shape validation is relaxed in this prototyping phase to enable rapid iteration.
+ *
+ * Denormalization for Authorization:
+ * N/A - The current data model does not require denormalization. All authorization decisions are based on authentication.
+ *
+ * Structural Segregation:
+ * N/A - There is no segregation of public and private data. All data is considered private except for sales.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Manages access to inventory items.
-     * @path /inventory_items/{inventoryItemId}
-     * @allow (create) Signed-in user can create an inventory item.
-     * @allow (get) Signed-in user can get an inventory item.
-     * @allow (list) Signed-in user can list inventory items.
-     * @allow (update) Signed-in user can update an inventory item.
-     * @allow (delete) Signed-in user can delete an inventory item.
-     * @deny (create) Anonymous user attempts to create an inventory item.
-     * @deny (update) Anonymous user attempts to update an inventory item.
-     * @principle Requires authentication for all operations.
+     * @description Secures the 'inventory' collection, requiring authentication for all write operations and allowing authenticated users to read.
+     * @path /databases/{database}/documents/inventory
+     * @allow (create) - Authenticated user can create an inventory item.
+     * @deny (create) - Unauthenticated user attempts to create an inventory item.
+     * @allow (get, list) - Authenticated user can read inventory.
+     * @deny (get, list) - Unauthenticated user cannot read inventory.
+     * @principle Requires authentication for all write operations; authenticated read access.
      */
-    match /inventory_items/{inventoryItemId} {
+    match /inventory/{inventoryId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource != null;
-      allow delete: if isSignedIn() && resource != null;
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
     }
 
     /**
-     * @description Manages access to orders.
-     * @path /orders/{orderId}
-     * @allow (create) Signed-in user can create an order.
-     * @allow (get) Signed-in user can get an order.
-     * @allow (list) Signed-in user can list orders.
-     * @allow (update) Signed-in user can update an order.
-     * @allow (delete) Signed-in user can delete an order.
-     * @deny (create) Anonymous user attempts to create an order.
-     * @deny (update) Anonymous user attempts to update an order.
-     * @principle Requires authentication for all operations.
+     * @description Secures the 'orders' collection, requiring authentication for all write operations and allowing authenticated users to read.
+     * @path /databases/{database}/documents/orders
+     * @allow (create) - Authenticated user can create an order.
+     * @deny (create) - Unauthenticated user attempts to create an order.
+     * @allow (get, list) - Authenticated user can read orders.
+     * @deny (get, list) - Unauthenticated user cannot read orders.
+     * @principle Requires authentication for all write operations; authenticated read access.
      */
     match /orders/{orderId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource != null;
-      allow delete: if isSignedIn() && resource != null;
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
     }
 
     /**
-     * @description Manages access to order items.
-     * @path /order_items/{orderItemId}
-     * @allow (create) Signed-in user can create an order item.
-     * @allow (get) Signed-in user can get an order item.
-     * @allow (list) Signed-in user can list order items.
-     * @allow (update) Signed-in user can update an order item.
-     * @allow (delete) Signed-in user can delete an order item.
-     * @deny (create) Anonymous user attempts to create an order item.
-     * @deny (update) Anonymous user attempts to update an order item.
-     * @principle Requires authentication for all operations.
+     * @description Secures the 'sales' collection, allowing public read access but requiring authentication for write operations.
+     * @path /databases/{database}/documents/sales
+     * @allow (get, list) - Any user (authenticated or unauthenticated) can read sales data.
+     * @deny (create) - Unauthenticated user attempts to create a sale.
+     * @allow (create) - Authenticated user can create a sale.
+     * @principle Allows public read access with authentication required for writes.
      */
-    match /order_items/{orderItemId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+    match /sales/{saleId} {
+      allow get: if true;
+      allow list: if true;
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource != null;
-      allow delete: if isSignedIn() && resource != null;
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
     }
 
     /**
-     * @description Manages access to car wash sales.
-     * @path /car_wash_sales/{carWashSaleId}
-     * @allow (create) Signed-in user can create a car wash sale.
-     * @allow (get) Signed-in user can get a car wash sale.
-     * @allow (list) Signed-in user can list car wash sales.
-     * @allow (update) Signed-in user can update a car wash sale.
-     * @allow (delete) Signed-in user can delete a car wash sale.
-     * @deny (create) Anonymous user attempts to create a car wash sale.
-     * @deny (update) Anonymous user attempts to update a car wash sale.
-     * @principle Requires authentication for all operations.
+     * @description Secures the 'services' collection, requiring authentication for all write operations and allowing authenticated users to read.
+     * @path /databases/{database}/documents/services
+     * @allow (create) - Authenticated user can create a service.
+     * @deny (create) - Unauthenticated user attempts to create a service.
+     * @allow (get, list) - Authenticated user can read services.
+     * @deny (get, list) - Unauthenticated user cannot read services.
+     * @principle Requires authentication for all write operations; authenticated read access.
      */
-    match /car_wash_sales/{carWashSaleId} {
+    match /services/{serviceId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
       allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource != null;
-      allow delete: if isSignedIn() && resource != null;
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
     }
 
-    /**
-     * @description Manages access to prices.
-     * @path /prices/{priceId}
-     * @allow (create) Signed-in user can create a price.
-     * @allow (get) Signed-in user can get a price.
-     * @allow (list) Signed-in user can list prices.
-     * @allow (update) Signed-in user can update a price.
-     * @allow (delete) Signed-in user can delete a price.
-     * @deny (create) Anonymous user attempts to create a price.
-     * @deny (update) Anonymous user attempts to update a price.
-     * @principle Requires authentication for all operations.
-     */
-    match /prices/{priceId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource != null;
-      allow delete: if isSignedIn() && resource != null;
+    function isSignedIn() {
+      return request.auth != null;
     }
-
-  }
-
-  // Helper function to determine if a user is signed in
-  function isSignedIn() {
-    return request.auth != null;
   }
 }
