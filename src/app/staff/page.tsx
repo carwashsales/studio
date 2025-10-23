@@ -23,7 +23,7 @@ import { collection, deleteDoc, doc } from 'firebase/firestore';
 import type { Staff } from '@/types';
 import { useRouter } from 'next/navigation';
 import { MoreHorizontal, PlusCircle, Trash } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -35,7 +35,7 @@ import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { SERVICE_TYPES } from '@/lib/services';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 type PaymentType = 'coupon' | 'cash' | 'machine' | 'not-paid';
 
@@ -203,7 +203,7 @@ export default function SalesPage() {
               <div className="grid gap-2">
                 <Label htmlFor="service-type">Service Type</Label>
                 <Select value={serviceType} onValueChange={(v) => { setServiceType(v); setErrors(p => ({...p, serviceType: false}))}} disabled={noStaff}>
-                  <SelectTrigger id="service-type" data-invalid={errors.serviceType}>
+                  <SelectTrigger id="service-type" data-invalid={errors.serviceType ? 'true' : 'false'}>
                     <SelectValue placeholder="Select a service" />
                   </SelectTrigger>
                   <SelectContent>
@@ -218,7 +218,7 @@ export default function SalesPage() {
                 <div className="grid gap-2">
                   <Label htmlFor="car-size">Car Size</Label>
                   <Select value={carSize} onValueChange={(v) => { setCarSize(v); setErrors(p => ({...p, carSize: false}))}} disabled={noStaff}>
-                    <SelectTrigger id="car-size" data-invalid={errors.carSize}><SelectValue placeholder="Select car size" /></SelectTrigger>
+                    <SelectTrigger id="car-size" data-invalid={errors.carSize ? 'true' : 'false'}><SelectValue placeholder="Select car size" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="small">Small</SelectItem>
                       <SelectItem value="medium">Medium</SelectItem>
@@ -231,7 +231,7 @@ export default function SalesPage() {
               <div className="grid gap-2">
                 <Label htmlFor="staff-member">Staff Member</Label>
                 <Select value={staffId} onValueChange={(v) => { setStaffId(v); setErrors(p => ({...p, staffId: false}))}} disabled={noStaff}>
-                  <SelectTrigger id="staff-member" data-invalid={errors.staffId}>
+                  <SelectTrigger id="staff-member" data-invalid={errors.staffId ? 'true' : 'false'}>
                     <SelectValue placeholder={staffLoading ? "Loading..." : "Select staff"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -258,7 +258,7 @@ export default function SalesPage() {
                 </div>
               )}
 
-              <div className="grid gap-3 pt-2 border-t" data-invalid={errors.paymentType}>
+              <div className="grid gap-3 pt-2 border-t" data-invalid={errors.paymentType ? 'true' : 'false'}>
                 <Label className="font-semibold">Payment Method</Label>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                   {serviceConfig?.hasCoupon && (
