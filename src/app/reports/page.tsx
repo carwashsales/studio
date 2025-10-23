@@ -32,6 +32,7 @@ import { collection } from "firebase/firestore";
 import type { InventoryItem, Order, CarWashSale } from "@/types";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
+import { SERVICE_TYPES } from "@/lib/services";
 
 
 const usageChartConfig = {
@@ -47,7 +48,13 @@ const salesPieChartConfig = {
   "Outside Only": { label: "Outside Only", color: "hsl(var(--chart-2))" },
   "Interior Only": { label: "Interior Only", color: "hsl(var(--chart-3))" },
   "Water Only": { label: "Water Only", color: "hsl(var(--chart-4))" },
-  "Other": { label: "Other", color: "hsl(var(--chart-5))" },
+  "Engine Wash Only": { label: "Engine Wash Only", color: "hsl(var(--chart-5))" },
+  "Mirrors Only": { label: "Mirrors Only", color: "hsl(var(--primary))" },
+  "Carpets Covering": { label: "Carpets Covering", color: "hsl(var(--accent))" },
+  "Carpet Cleaning": { label: "Carpet Cleaning", color: "hsl(207, 70%, 53%)" },
+  "Air Conditioner Wash": { label: "Air Conditioner Wash", color: "hsl(145, 63%, 49%)" },
+  "Wax Add-on": { label: "Wax Add-on", color: "hsl(43, 74%, 66%)" },
+  "Other": { label: "Other", color: "hsl(var(--muted))" },
 } satisfies ChartConfig;
 
 
