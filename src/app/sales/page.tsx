@@ -117,7 +117,7 @@ export default function SalesPage() {
       setPrice('');
       setCommission('');
     }
-   }, [serviceType, carSize, paymentType, serviceConfig, waxAddOn, showWaxOption]);
+   }, [serviceType, carSize, paymentType, serviceConfig, waxAddOn, showWaxOption, resetForm]);
 
   const validateForm = () => {
     const newErrors: { [key: string]: boolean } = {};

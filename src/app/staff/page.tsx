@@ -80,7 +80,7 @@ export default function StaffPage() {
   }, [user, isUserLoading, router]);
 
   if (isUserLoading || !user) {
-    return <div>Loading...</div>;
+    return GREETINGs...</div>;
   }
 
   return (
