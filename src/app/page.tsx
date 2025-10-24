@@ -72,17 +72,21 @@ async function seedSampleData(firestore: any) {
     ]
   };
 
-  for (const [colName, data] of Object.entries(collections)) {
-      const colRef = collection(firestore, colName);
-      const snapshot = await getDocs(colRef);
-      if (snapshot.empty) {
-          console.log(`Seeding ${colName}...`);
+  const staffCheckRef = collection(firestore, 'staff');
+  const staffSnapshot = await getDocs(staffCheckRef);
+
+  if (staffSnapshot.empty) {
+      console.log('Staff collection is empty. Seeding all sample data...');
+      for (const [colName, data] of Object.entries(collections)) {
+          const colRef = collection(firestore, colName);
           for (const item of data) {
               addDocumentNonBlocking(colRef, item);
           }
-      } else {
-          console.log(`${colName} is not empty, skipping seed.`);
       }
+      return true; // Indicates that data was seeded
+  } else {
+      console.log('Staff collection is not empty, skipping seed.');
+      return false; // Indicates that data was not seeded
   }
 }
 
@@ -102,17 +106,14 @@ export default function Dashboard() {
   // Seed sample data for demonstration
   useEffect(() => {
     if (firestore && user) {
-        // This is a temporary solution for demo purposes.
-        // In a real app, you would have a more robust data migration system.
-        const hasSeeded = sessionStorage.getItem('hasSeededData');
-        if (!hasSeeded) {
-            seedSampleData(firestore);
-            sessionStorage.setItem('hasSeededData', 'true');
-            toast({
-                title: 'Sample Data Loaded',
-                description: 'We have added some sample data to get you started.',
-            });
-        }
+        seedSampleData(firestore).then(wasSeeded => {
+            if (wasSeeded) {
+                toast({
+                    title: 'Sample Data Loaded',
+                    description: 'We have added some sample data to get you started.',
+                });
+            }
+        });
     }
   }, [firestore, user, toast]);
 
