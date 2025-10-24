@@ -15,13 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartConfig,
-} from '@/components/ui/chart';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { BarChart } from '@tremor/react';
 import {
   Package,
   AlertTriangle,
@@ -35,13 +29,6 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useToast } from '@/components/ui/use-toast';
-
-const chartConfig = {
-  sales: {
-    label: 'Sales',
-    color: 'hsl(var(--primary))',
-  },
-} satisfies ChartConfig;
 
 async function seedSampleData(firestore: any, userId: string) {
   const collections = {
@@ -146,30 +133,27 @@ export default function Dashboard() {
   const monthlySales = React.useMemo(() => {
     if (!salesData) return [];
     
-    // 1. Create a template for the last 6 months
-    const monthTemplate: { [key: string]: { month: string; sales: number; sortKey: number } } = {};
+    const monthTemplate: { [key: string]: { month: string; Sales: number; sortKey: number } } = {};
     const today = new Date();
     for (let i = 5; i >= 0; i--) {
         const date = subMonths(today, i);
         const monthName = format(date, 'MMM');
         const year = getYear(date);
         const month = getMonth(date);
-        const sortKey = year * 100 + month; // e.g., 202407 for July 2024
-        monthTemplate[`${year}-${month}`] = { month: monthName, sales: 0, sortKey };
+        const sortKey = year * 100 + month;
+        monthTemplate[`${year}-${month}`] = { month: monthName, Sales: 0, sortKey };
     }
 
-    // 2. Populate sales data into the template
     salesData.forEach(sale => {
       const saleDate = new Date(sale.date);
       const year = getYear(saleDate);
       const month = getMonth(saleDate);
       const key = `${year}-${month}`;
       if (monthTemplate[key]) {
-        monthTemplate[key].sales += sale.amount;
+        monthTemplate[key].Sales += sale.amount;
       }
     });
 
-    // 3. Convert to array and sort chronologically
     return Object.values(monthTemplate).sort((a, b) => a.sortKey - b.sortKey);
   }, [salesData]);
   
@@ -235,32 +219,17 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartContainer config={chartConfig} className="h-[250px] w-full">
-              <BarChart
-                accessibilityLayer
+            <BarChart
                 data={monthlySales}
-                margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
-              >
-                <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="month"
-                  tickLine={false}
-                  tickMargin={10}
-                  axisLine={false}
-                />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={10}
-                  tickFormatter={(value) => `${value / 1000}k`}
-                />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent indicator="dot" />}
-                />
-                <Bar dataKey="sales" fill="var(--color-sales)" radius={8} />
-              </BarChart>
-            </ChartContainer>
+                index="month"
+                categories={['Sales']}
+                colors={['blue']}
+                valueFormatter={(number: number) =>
+                    `SAR ${new Intl.NumberFormat('us').format(number).toString()}`
+                }
+                yAxisWidth={60}
+                className="h-[250px] w-full"
+             />
           </CardContent>
         </Card>
 
@@ -302,5 +271,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-    

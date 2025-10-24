@@ -1,21 +1,12 @@
 patch-package
 --- a/node_modules/fast-equals/package.json
 +++ b/node_modules/fast-equals/package.json
-@@ -6,7 +6,7 @@
-   "esnext": "dist/esm/index.mjs",
-   "types": "dist/cjs/index.d.ts",
-   "main": "dist/cjs/index.js",
--  "module": "dist/esm/index.mjs",
-+  "module": "dist/cjs/index.js",
-   "exports": {
-     ".": {
-       "import": {
-@@ -16,7 +16,7 @@
-       },
-       "require": {
-         "types": "./dist/cjs/index.d.ts",
--        "default": "./dist/cjs/index.js"
-+        "default": "./dist/cjs/index.js" 
-       }
-     }
+@@ -37,7 +37,7 @@
+   "browser": {
+     "./dist/esm/index.mjs": "./dist/esm/index.mjs",
+     "./dist/cjs/index.js": "./dist/cjs/index.js",
+-    "./": "./dist/esm/index.mjs"
++    "./": "./dist/cjs/index.js"
    },
+   "dependencies": {
+     "react-is": "^18.2.0"

@@ -6,6 +6,8 @@ export default {
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+     // Path to the Tremor module
+    './node_modules/@tremor/react/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
@@ -95,5 +97,5 @@ export default {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [require('tailwindcss-animate'), require('@tremor/tailwind-colors')],
 } satisfies Config;
