@@ -26,12 +26,26 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import * as React from 'react';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser, addDocumentNonBlocking } from '@/firebase';
+import { collection, doc, updateDoc } from 'firebase/firestore';
 import type { Order } from '@/types';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/components/ui/use-toast';
+
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -50,10 +64,84 @@ const getStatusBadge = (status: string) => {
   }
 };
 
+function OrderDialog({ children }: { children: React.ReactNode }) {
+  const firestore = useFirestore();
+  const ordersCollection = useMemoFirebase(() => firestore ? collection(firestore, 'orders') : null, [firestore]);
+  const { toast } = useToast();
+
+  const [supplier, setSupplier] = React.useState('');
+  const [total, setTotal] = React.useState('');
+  const [open, setOpen] = React.useState(false);
+
+  const handleSubmit = () => {
+    if (!ordersCollection) return;
+    const newOrder: Omit<Order, 'id'> = {
+      supplier,
+      total: parseFloat(total) || 0,
+      date: new Date().toISOString(),
+      status: 'Pending',
+    };
+    addDocumentNonBlocking(ordersCollection, newOrder);
+    toast({ title: "Order Created", description: `New order for ${supplier} has been placed.` });
+    setSupplier('');
+    setTotal('');
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Create New Order</DialogTitle>
+          <DialogDescription>
+            Enter the details for the new supply order.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="supplier" className="text-right">
+              Supplier
+            </Label>
+            <Input
+              id="supplier"
+              value={supplier}
+              onChange={(e) => setSupplier(e.target.value)}
+              className="col-span-3"
+              placeholder="Supplier name"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="total" className="text-right">
+              Total Amount
+            </Label>
+            <Input
+              id="total"
+              type="number"
+              value={total}
+              onChange={(e) => setTotal(e.target.value)}
+              className="col-span-3"
+              placeholder="0.00"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+            <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+            </DialogClose>
+          <Button onClick={handleSubmit}>Create Order</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
 export default function OrdersPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
+  const { toast } = useToast();
   
   React.useEffect(() => {
     if (!isUserLoading && !user) {
@@ -66,6 +154,16 @@ export default function OrdersPage() {
     [firestore, user]
   );
   const { data: orders, isLoading } = useCollection<Order>(ordersCollection);
+
+  const handleMarkAsReceived = async (orderId: string) => {
+    if (!firestore) return;
+    const orderRef = doc(firestore, 'orders', orderId);
+    await updateDoc(orderRef, { status: 'Received' });
+    toast({
+        title: 'Order Updated',
+        description: 'Order has been marked as received.',
+    });
+  }
 
   if (isUserLoading || !user) {
     return <div>Loading...</div>;
@@ -81,12 +179,14 @@ export default function OrdersPage() {
               Create and manage orders for new supplies.
             </CardDescription>
           </div>
-          <Button size="sm" className="h-8 gap-1">
-            <PlusCircle className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              New Order
-            </span>
-          </Button>
+          <OrderDialog>
+            <Button size="sm" className="h-8 gap-1">
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                New Order
+                </span>
+            </Button>
+          </OrderDialog>
         </div>
       </CardHeader>
       <CardContent>
@@ -128,8 +228,12 @@ export default function OrdersPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem>Mark as Received</DropdownMenuItem>
+                      <DropdownMenuItem disabled>View Details</DropdownMenuItem>
+                       {order.status === 'Shipped' && (
+                        <DropdownMenuItem onClick={() => handleMarkAsReceived(order.id)}>
+                            Mark as Received
+                        </DropdownMenuItem>
+                       )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

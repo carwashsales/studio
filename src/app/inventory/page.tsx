@@ -44,6 +44,8 @@ import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
 
+type StatusFilter = "all" | "in-stock" | "low-stock" | "out-of-stock";
+
 const getStatusBadge = (quantity: number) => {
   if (quantity === 0) {
     return (
@@ -86,17 +88,17 @@ function ItemDialog({ mode, item, children }: { mode: 'add' | 'edit', item?: Inv
   React.useEffect(() => {
     if (open && item) {
       setName(item.name);
-      setCategory(item.category);
+      setCategory(item.category ?? '');
       setQuantity(item.quantity);
-      setLocation(item.location);
-    } else if (!open) {
-      // Reset form on close
+      setLocation(item.location ?? '');
+    } else if (open && mode === 'add') {
+      // Reset form on open for add mode
       setName('');
       setCategory('');
       setQuantity(0);
       setLocation('');
     }
-  }, [open, item]);
+  }, [open, item, mode]);
 
   const handleSubmit = () => {
     if (!firestore) return;
@@ -153,6 +155,7 @@ export default function InventoryPage() {
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>("all");
 
   React.useEffect(() => {
     if (!isUserLoading && !user) {
@@ -167,6 +170,21 @@ export default function InventoryPage() {
   const { data: inventoryItems, isLoading } =
     useCollection<InventoryItem>(inventoryCollection);
     
+  const filteredItems = React.useMemo(() => {
+    if (!inventoryItems) return [];
+    switch (statusFilter) {
+      case 'in-stock':
+        return inventoryItems.filter(item => item.quantity >= 10);
+      case 'low-stock':
+        return inventoryItems.filter(item => item.quantity > 0 && item.quantity < 10);
+      case 'out-of-stock':
+        return inventoryItems.filter(item => item.quantity === 0);
+      case 'all':
+      default:
+        return inventoryItems;
+    }
+  }, [inventoryItems, statusFilter]);
+
   const handleDelete = (itemId: string, itemName: string) => {
     if (!firestore) return;
     const itemRef = doc(firestore, 'inventory', itemId);
@@ -201,11 +219,16 @@ export default function InventoryPage() {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Filter by status</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuCheckboxItem checked>
+                <DropdownMenuCheckboxItem checked={statusFilter === 'all'} onCheckedChange={() => setStatusFilter('all')}>
+                  All
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem checked={statusFilter === 'in-stock'} onCheckedChange={() => setStatusFilter('in-stock')}>
                   In Stock
                 </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem>Low Stock</DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem checked={statusFilter === 'low-stock'} onCheckedChange={() => setStatusFilter('low-stock')}>
+                  Low Stock
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem checked={statusFilter === 'out-of-stock'} onCheckedChange={() => setStatusFilter('out-of-stock')}>
                   Out of Stock
                 </DropdownMenuCheckboxItem>
               </DropdownMenuContent>
@@ -237,7 +260,7 @@ export default function InventoryPage() {
           </TableHeader>
           <TableBody>
             {isLoading && <TableRow><TableCell colSpan={6}>Loading...</TableCell></TableRow>}
-            {inventoryItems && inventoryItems.map((item) => (
+            {filteredItems && filteredItems.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell className="hidden md:table-cell">
