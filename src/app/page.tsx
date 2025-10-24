@@ -27,13 +27,14 @@ import {
   AlertTriangle,
   ShoppingCart,
 } from 'lucide-react';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, where, limit } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser, addDocumentNonBlocking } from '@/firebase';
+import { collection, query, where, limit, getDocs } from 'firebase/firestore';
 import type { InventoryItem, CarWashSale, Order } from '@/types';
 import { format } from 'date-fns';
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useToast } from '@/components/ui/use-toast';
 
 const chartConfig = {
   sales: {
@@ -42,16 +43,78 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+async function seedSampleData(firestore: any) {
+  const collections = {
+    inventory: [
+      { name: 'Car Shampoo', category: 'Soaps', quantity: 50, location: 'Shelf A' },
+      { name: 'Tire Shine', category: 'Chemicals', quantity: 8, location: 'Shelf B' },
+      { name: 'Microfiber Towels', category: 'Tools', quantity: 150, location: 'Cabinet 1' },
+      { name: 'Wax Polish', category: 'Chemicals', quantity: 20, location: 'Shelf B' },
+      { name: 'Wheel Cleaner', category: 'Chemicals', quantity: 0, location: 'Shelf B' },
+    ],
+    orders: [
+        { supplier: 'ChemCo', date: new Date(2023, 10, 15).toISOString(), status: 'Received', total: 450.00 },
+        { supplier: 'SupplyPro', date: new Date(2023, 11, 1).toISOString(), status: 'Shipped', total: 200.50 },
+        { supplier: 'AutoGoods', date: new Date().toISOString(), status: 'Pending', total: 120.00 },
+        { supplier: 'CleanAll', date: new Date(2023, 9, 20).toISOString(), status: 'Cancelled', total: 300.00 },
+    ],
+    sales: [
+        { service: 'Full Wash', staffName: 'Ahmed', carSize: 'medium', date: new Date().toISOString(), amount: 25, commission: 10, hasCoupon: false, paymentMethod: 'cash', waxAddOn: false, isPaid: true },
+        { service: 'Outside Only', staffName: 'Mohammed', carSize: 'large', date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), amount: 25, commission: 10, hasCoupon: false, paymentMethod: 'machine', waxAddOn: true, isPaid: true },
+        { service: 'Interior Only', staffName: 'Fatima', date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), amount: 15, commission: 7, hasCoupon: false, paymentMethod: 'cash', waxAddOn: false, isPaid: true },
+        { service: 'Full Wash', staffName: 'Yusuf', carSize: 'small', date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), amount: 0, commission: 4, hasCoupon: true, paymentMethod: 'coupon', waxAddOn: false, isPaid: true },
+    ],
+    staff: [
+        { name: 'Ahmed' },
+        { name: 'Mohammed' },
+        { name: 'Fatima' },
+        { name: 'Yusuf' },
+    ]
+  };
+
+  for (const [colName, data] of Object.entries(collections)) {
+      const colRef = collection(firestore, colName);
+      const snapshot = await getDocs(colRef);
+      if (snapshot.empty) {
+          console.log(`Seeding ${colName}...`);
+          for (const item of data) {
+              addDocumentNonBlocking(colRef, item);
+          }
+      } else {
+          console.log(`${colName} is not empty, skipping seed.`);
+      }
+  }
+}
+
+
 export default function Dashboard() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
+  
+  // Seed sample data for demonstration
+  useEffect(() => {
+    if (firestore && user) {
+        // This is a temporary solution for demo purposes.
+        // In a real app, you would have a more robust data migration system.
+        const hasSeeded = sessionStorage.getItem('hasSeededData');
+        if (!hasSeeded) {
+            seedSampleData(firestore);
+            sessionStorage.setItem('hasSeededData', 'true');
+            toast({
+                title: 'Sample Data Loaded',
+                description: 'We have added some sample data to get you started.',
+            });
+        }
+    }
+  }, [firestore, user, toast]);
 
   const inventoryQuery = useMemoFirebase(() =>
     firestore && user ? collection(firestore, 'inventory') : null
