@@ -97,5 +97,5 @@ export default {
       },
     },
   },
-  plugins: [require('tailwindcss-animate'), require('@tremor/tailwind-colors')],
+  plugins: [require('tailwindcss-animate')],
 } satisfies Config;
