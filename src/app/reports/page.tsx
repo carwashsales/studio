@@ -63,6 +63,19 @@ const salesPieChartConfig = {
   "Other": { label: "Other", color: "hsl(var(--muted))" },
 } satisfies ChartConfig;
 
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+        <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
+            {`${(percent * 100).toFixed(0)}%`}
+        </text>
+    );
+};
+
 export default function ReportsPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
@@ -157,7 +170,7 @@ export default function ReportsPage() {
           <ChartContainer config={inventoryChartConfig} className="mx-auto aspect-square h-[300px]">
             <PieChart>
               <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
-              <Pie data={inventoryChartData} dataKey="quantity" nameKey="name" innerRadius={50} strokeWidth={5}>
+              <Pie data={inventoryChartData} dataKey="quantity" nameKey="name" innerRadius={50} strokeWidth={5} labelLine={false} label={renderCustomizedLabel}>
                  {inventoryChartData.map((entry) => (
                     <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                   ))}
@@ -225,4 +238,3 @@ export default function ReportsPage() {
     </div>
   );
 }
-
