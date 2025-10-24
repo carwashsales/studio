@@ -5,7 +5,6 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import SidebarNav from "@/components/sidebar-nav";
 import Header from "@/components/header";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
-import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
   title: "CleanSweep Inventory",
@@ -38,7 +37,6 @@ export default function RootLayout({
               </SidebarInset>
           </SidebarProvider>
         </FirebaseClientProvider>
-        <Analytics />
       </body>
     </html>
   );
