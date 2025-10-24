@@ -24,11 +24,13 @@ import {
 import { useCollection, useFirestore, useMemoFirebase, useUser, addDocumentNonBlocking } from '@/firebase';
 import { collection, query, where, limit, getDocs } from 'firebase/firestore';
 import type { InventoryItem, CarWashSale, Order } from '@/types';
-import { format, subMonths, getMonth, getYear } from 'date-fns';
-import React, { useEffect } from 'react';
+import { format, subMonths, getMonth, getYear, subDays, startOfDay } from 'date-fns';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useToast } from '@/components/ui/use-toast';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 
 async function seedSampleData(firestore: any, userId: string) {
   const collections = {
@@ -83,6 +85,7 @@ export default function Dashboard() {
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const [salesView, setSalesView] = useState<'daily' | 'monthly'>('daily');
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -130,32 +133,52 @@ export default function Dashboard() {
     return inventoryItems?.reduce((acc, item) => acc + item.quantity, 0) || 0;
   }, [inventoryItems]);
 
-  const monthlySales = React.useMemo(() => {
+  const salesChartData = React.useMemo(() => {
     if (!salesData) return [];
-    
-    const monthTemplate: { [key: string]: { month: string; Sales: number; sortKey: number } } = {};
-    const today = new Date();
-    for (let i = 5; i >= 0; i--) {
-        const date = subMonths(today, i);
-        const monthName = format(date, 'MMM');
-        const year = getYear(date);
-        const month = getMonth(date);
-        const sortKey = year * 100 + month;
-        monthTemplate[`${year}-${month}`] = { month: monthName, Sales: 0, sortKey };
+
+    if (salesView === 'monthly') {
+        const monthTemplate: { [key: string]: { date: string; Sales: number; sortKey: number } } = {};
+        const today = new Date();
+        for (let i = 5; i >= 0; i--) {
+            const date = subMonths(today, i);
+            const monthName = format(date, 'MMM');
+            const year = getYear(date);
+            const month = getMonth(date);
+            const sortKey = year * 100 + month;
+            monthTemplate[`${year}-${month}`] = { date: monthName, Sales: 0, sortKey };
+        }
+
+        salesData.forEach(sale => {
+          const saleDate = new Date(sale.date);
+          const year = getYear(saleDate);
+          const month = getMonth(saleDate);
+          const key = `${year}-${month}`;
+          if (monthTemplate[key]) {
+            monthTemplate[key].Sales += sale.amount;
+          }
+        });
+
+        return Object.values(monthTemplate).sort((a, b) => a.sortKey - b.sortKey);
+    } else { // Daily view
+        const dayTemplate: { [key: string]: { date: string; Sales: number } } = {};
+        const today = startOfDay(new Date());
+        for (let i = 29; i >= 0; i--) {
+            const date = subDays(today, i);
+            const dayString = format(date, 'MMM d');
+            dayTemplate[dayString] = { date: dayString, Sales: 0 };
+        }
+
+        salesData.forEach(sale => {
+            const saleDate = startOfDay(new Date(sale.date));
+            const dayString = format(saleDate, 'MMM d');
+            if (dayTemplate[dayString]) {
+                dayTemplate[dayString].Sales += sale.amount;
+            }
+        });
+        
+        return Object.values(dayTemplate);
     }
-
-    salesData.forEach(sale => {
-      const saleDate = new Date(sale.date);
-      const year = getYear(saleDate);
-      const month = getMonth(saleDate);
-      const key = `${year}-${month}`;
-      if (monthTemplate[key]) {
-        monthTemplate[key].Sales += sale.amount;
-      }
-    });
-
-    return Object.values(monthTemplate).sort((a, b) => a.sortKey - b.sortKey);
-  }, [salesData]);
+  }, [salesData, salesView]);
   
   if (isUserLoading || !user) {
     return <div>Loading...</div>;
@@ -213,15 +236,27 @@ export default function Dashboard() {
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:col-span-4">
         <Card className="xl:col-span-2">
           <CardHeader>
-            <CardTitle className="font-headline">Sales Overview</CardTitle>
-            <CardDescription>
-              A summary of car wash sales over the past months.
-            </CardDescription>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="font-headline">Sales Overview</CardTitle>
+                <CardDescription>
+                  A summary of car wash sales.
+                </CardDescription>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="sales-view">Monthly</Label>
+                <Switch 
+                  id="sales-view"
+                  checked={salesView === 'monthly'}
+                  onCheckedChange={(checked) => setSalesView(checked ? 'monthly' : 'daily')}
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <BarChart
-                data={monthlySales}
-                index="month"
+                data={salesChartData}
+                index="date"
                 categories={['Sales']}
                 colors={['blue']}
                 valueFormatter={(number: number) =>
