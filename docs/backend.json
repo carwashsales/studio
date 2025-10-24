@@ -18,10 +18,6 @@
         "quantity": {
           "type": "number",
           "description": "Current quantity of the item in stock."
-        },
-        "location": {
-          "type": "string",
-          "description": "The location where the item is stored."
         }
       },
       "required": [

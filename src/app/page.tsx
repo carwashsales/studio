@@ -46,11 +46,11 @@ const chartConfig = {
 async function seedSampleData(firestore: any, userId: string) {
   const collections = {
     inventory: [
-      { name: 'Car Shampoo', category: 'Soaps', quantity: 50, location: 'Shelf A' },
-      { name: 'Tire Shine', category: 'Chemicals', quantity: 8, location: 'Shelf B' },
-      { name: 'Microfiber Towels', category: 'Tools', quantity: 150, location: 'Cabinet 1' },
-      { name: 'Wax Polish', category: 'Chemicals', quantity: 20, location: 'Shelf B' },
-      { name: 'Wheel Cleaner', category: 'Chemicals', quantity: 0, location: 'Shelf B' },
+      { name: 'Car Shampoo', category: 'Soaps', quantity: 50 },
+      { name: 'Tire Shine', category: 'Chemicals', quantity: 8 },
+      { name: 'Microfiber Towels', category: 'Tools', quantity: 150 },
+      { name: 'Wax Polish', category: 'Chemicals', quantity: 20 },
+      { name: 'Wheel Cleaner', category: 'Chemicals', quantity: 0 },
     ],
     orders: [
         { supplier: 'ChemCo', date: new Date(2023, 10, 15).toISOString(), status: 'Received', total: 450.00 },

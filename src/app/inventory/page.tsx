@@ -83,7 +83,6 @@ function ItemDialog({ mode, item, children }: { mode: 'add' | 'edit', item?: Inv
   const [name, setName] = React.useState(item?.name || '');
   const [category, setCategory] = React.useState(item?.category || '');
   const [quantity, setQuantity] = React.useState(item?.quantity || 0);
-  const [location, setLocation] = React.useState(item?.location || '');
   const [open, setOpen] = React.useState(false);
   
   React.useEffect(() => {
@@ -91,13 +90,11 @@ function ItemDialog({ mode, item, children }: { mode: 'add' | 'edit', item?: Inv
       setName(item.name);
       setCategory(item.category ?? '');
       setQuantity(item.quantity);
-      setLocation(item.location ?? '');
     } else if (open && mode === 'add') {
       // Reset form on open for add mode
       setName('');
       setCategory('');
       setQuantity(0);
-      setLocation('');
     }
   }, [open, item, mode]);
 
@@ -105,12 +102,12 @@ function ItemDialog({ mode, item, children }: { mode: 'add' | 'edit', item?: Inv
     if (!firestore || !user) return;
     if (mode === 'add') {
         if (!inventoryCollection) return;
-        const newItem: Omit<InventoryItem, 'id'> = { name, category, quantity, location };
+        const newItem: Omit<InventoryItem, 'id'> = { name, category, quantity };
         addDocumentNonBlocking(inventoryCollection, newItem);
         toast({ title: "Item Added", description: `${name} has been added to the inventory.`});
     } else if (mode === 'edit' && item) {
         const itemRef = doc(firestore, 'users', user.uid, 'inventory', item.id);
-        const updatedItem: Partial<InventoryItem> = { name, category, quantity, location };
+        const updatedItem: Partial<InventoryItem> = { name, category, quantity };
         setDocumentNonBlocking(itemRef, updatedItem, { merge: true });
         toast({ title: "Item Updated", description: `${name} has been updated.`});
     }
@@ -136,10 +133,6 @@ function ItemDialog({ mode, item, children }: { mode: 'add' | 'edit', item?: Inv
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="quantity" className="text-right">Quantity</Label>
             <Input id="quantity" type="number" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="location" className="text-right">Location</Label>
-            <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} className="col-span-3" />
           </div>
         </div>
         <DialogFooter>
@@ -253,14 +246,13 @@ export default function InventoryPage() {
               <TableHead className="hidden md:table-cell">Category</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Quantity</TableHead>
-              <TableHead className="hidden md:table-cell">Location</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={6}>Loading...</TableCell></TableRow>}
+            {isLoading && <TableRow><TableCell colSpan={5}>Loading...</TableCell></TableRow>}
             {filteredItems && filteredItems.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.name}</TableCell>
@@ -269,9 +261,6 @@ export default function InventoryPage() {
                 </TableCell>
                 <TableCell>{getStatusBadge(item.quantity)}</TableCell>
                 <TableCell className="text-right">{item.quantity}</TableCell>
-                <TableCell className="hidden md:table-cell">
-                  {item.location}
-                </TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
