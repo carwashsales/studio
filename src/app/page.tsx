@@ -30,7 +30,7 @@ import {
 import { useCollection, useFirestore, useMemoFirebase, useUser, addDocumentNonBlocking } from '@/firebase';
 import { collection, query, where, limit, getDocs } from 'firebase/firestore';
 import type { InventoryItem, CarWashSale, Order } from '@/types';
-import { format } from 'date-fns';
+import { format, subMonths, getMonth, getYear } from 'date-fns';
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -73,7 +73,7 @@ async function seedSampleData(firestore: any, userId: string) {
   };
 
   const staffCheckRef = collection(firestore, 'users', userId, 'staff');
-  const staffSnapshot = await getDocs(staffCheckRef);
+  const staffSnapshot = await getDocs(query(staffCheckRef, limit(1)));
 
   if (staffSnapshot.empty) {
       console.log('User has no staff, seeding all sample data...');
@@ -144,12 +144,33 @@ export default function Dashboard() {
   }, [inventoryItems]);
 
   const monthlySales = React.useMemo(() => {
-    const salesByMonth: { [key: string]: number } = {};
-    salesData?.forEach(sale => {
-      const month = format(new Date(sale.date), 'MMM');
-      salesByMonth[month] = (salesByMonth[month] || 0) + sale.amount;
+    if (!salesData) return [];
+    
+    // 1. Create a template for the last 6 months
+    const monthTemplate: { [key: string]: { month: string; sales: number; sortKey: number } } = {};
+    const today = new Date();
+    for (let i = 5; i >= 0; i--) {
+        const date = subMonths(today, i);
+        const monthName = format(date, 'MMM');
+        const year = getYear(date);
+        const month = getMonth(date);
+        const sortKey = year * 100 + month; // e.g., 202407 for July 2024
+        monthTemplate[`${year}-${month}`] = { month: monthName, sales: 0, sortKey };
+    }
+
+    // 2. Populate sales data into the template
+    salesData.forEach(sale => {
+      const saleDate = new Date(sale.date);
+      const year = getYear(saleDate);
+      const month = getMonth(saleDate);
+      const key = `${year}-${month}`;
+      if (monthTemplate[key]) {
+        monthTemplate[key].sales += sale.amount;
+      }
     });
-    return Object.entries(salesByMonth).map(([month, sales]) => ({ month, sales }));
+
+    // 3. Convert to array and sort chronologically
+    return Object.values(monthTemplate).sort((a, b) => a.sortKey - b.sortKey);
   }, [salesData]);
   
   if (isUserLoading || !user) {
@@ -281,3 +302,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
+    
