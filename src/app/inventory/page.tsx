@@ -73,9 +73,10 @@ const getStatusBadge = (quantity: number) => {
 
 function ItemDialog({ mode, item, children }: { mode: 'add' | 'edit', item?: InventoryItem, children: React.ReactNode }) {
   const firestore = useFirestore();
+  const { user } = useUser();
   const inventoryCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'inventory') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, 'users', user.uid, 'inventory') : null),
+    [firestore, user]
   );
   const { toast } = useToast();
 
@@ -101,14 +102,14 @@ function ItemDialog({ mode, item, children }: { mode: 'add' | 'edit', item?: Inv
   }, [open, item, mode]);
 
   const handleSubmit = () => {
-    if (!firestore) return;
+    if (!firestore || !user) return;
     if (mode === 'add') {
         if (!inventoryCollection) return;
         const newItem: Omit<InventoryItem, 'id'> = { name, category, quantity, location };
         addDocumentNonBlocking(inventoryCollection, newItem);
         toast({ title: "Item Added", description: `${name} has been added to the inventory.`});
     } else if (mode === 'edit' && item) {
-        const itemRef = doc(firestore, 'inventory', item.id);
+        const itemRef = doc(firestore, 'users', user.uid, 'inventory', item.id);
         const updatedItem: Partial<InventoryItem> = { name, category, quantity, location };
         setDocumentNonBlocking(itemRef, updatedItem, { merge: true });
         toast({ title: "Item Updated", description: `${name} has been updated.`});
@@ -164,7 +165,7 @@ export default function InventoryPage() {
   }, [user, isUserLoading, router]);
 
   const inventoryCollection = useMemoFirebase(
-    () => (firestore && user ? collection(firestore, 'inventory') : null),
+    () => (firestore && user ? collection(firestore, 'users', user.uid, 'inventory') : null),
     [firestore, user]
   );
   const { data: inventoryItems, isLoading } =
@@ -186,8 +187,8 @@ export default function InventoryPage() {
   }, [inventoryItems, statusFilter]);
 
   const handleDelete = (itemId: string, itemName: string) => {
-    if (!firestore) return;
-    const itemRef = doc(firestore, 'inventory', itemId);
+    if (!firestore || !user) return;
+    const itemRef = doc(firestore, 'users', user.uid, 'inventory', itemId);
     deleteDocumentNonBlocking(itemRef);
     toast({ variant: "destructive", title: "Item Deleted", description: `${itemName} has been removed from the inventory.`});
   };

@@ -55,8 +55,8 @@ export default function SalesPage() {
   const [errors, setErrors] = React.useState<{ [key: string]: boolean }>({});
 
   // Firestore Collections
-  const salesQuery = useMemoFirebase(() => (firestore && user ? query(collection(firestore, 'sales'), orderBy('date', 'desc')) : null), [firestore, user]);
-  const staffCollection = useMemoFirebase(() => (firestore && user ? collection(firestore, 'staff') : null), [firestore, user]);
+  const salesQuery = useMemoFirebase(() => (firestore && user ? query(collection(firestore, 'users', user.uid, 'sales'), orderBy('date', 'desc')) : null), [firestore, user]);
+  const staffCollection = useMemoFirebase(() => (firestore && user ? collection(firestore, 'users', user.uid, 'staff') : null), [firestore, user]);
   const servicesQuery = useMemoFirebase(() => (firestore && user ? query(collection(firestore, 'users', user.uid, 'services'), orderBy('order')) : null), [firestore, user]);
   
   const { data: sales, isLoading: salesLoading } = useCollection<CarWashSale>(salesQuery);
@@ -149,7 +149,7 @@ export default function SalesPage() {
       });
       return;
     }
-    const salesCollection = collection(firestore, 'sales');
+    const salesCollection = collection(firestore, 'users', user.uid, 'sales');
 
     const selectedStaff = staff?.find(s => s.id === staffId);
     if (!selectedStaff) return;

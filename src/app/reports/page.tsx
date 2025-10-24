@@ -67,15 +67,15 @@ export default function ReportsPage() {
   }, [user, isUserLoading, router]);
 
   const inventoryCollection = useMemoFirebase(
-    () => (firestore && user ? collection(firestore, "inventory") : null),
+    () => (firestore && user ? collection(firestore, 'users', user.uid, "inventory") : null),
     [firestore, user]
   );
   const ordersCollection = useMemoFirebase(
-    () => (firestore && user ? collection(firestore, "orders") : null),
+    () => (firestore && user ? collection(firestore, 'users', user.uid, "orders") : null),
     [firestore, user]
   );
   const salesCollection = useMemoFirebase(
-    () => (firestore && user ? collection(firestore, "sales") : null),
+    () => (firestore && user ? collection(firestore, 'users', user.uid, "sales") : null),
     [firestore, user]
   );
 

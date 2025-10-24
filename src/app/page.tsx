@@ -43,7 +43,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-async function seedSampleData(firestore: any) {
+async function seedSampleData(firestore: any, userId: string) {
   const collections = {
     inventory: [
       { name: 'Car Shampoo', category: 'Soaps', quantity: 50, location: 'Shelf A' },
@@ -72,20 +72,20 @@ async function seedSampleData(firestore: any) {
     ]
   };
 
-  const staffCheckRef = collection(firestore, 'staff');
+  const staffCheckRef = collection(firestore, 'users', userId, 'staff');
   const staffSnapshot = await getDocs(staffCheckRef);
 
   if (staffSnapshot.empty) {
-      console.log('Staff collection is empty. Seeding all sample data...');
+      console.log('User has no staff, seeding all sample data...');
       for (const [colName, data] of Object.entries(collections)) {
-          const colRef = collection(firestore, colName);
+          const colRef = collection(firestore, 'users', userId, colName);
           for (const item of data) {
               addDocumentNonBlocking(colRef, item);
           }
       }
       return true; // Indicates that data was seeded
   } else {
-      console.log('Staff collection is not empty, skipping seed.');
+      console.log('User already has staff, skipping seed.');
       return false; // Indicates that data was not seeded
   }
 }
@@ -106,7 +106,7 @@ export default function Dashboard() {
   // Seed sample data for demonstration
   useEffect(() => {
     if (firestore && user) {
-        seedSampleData(firestore).then(wasSeeded => {
+        seedSampleData(firestore, user.uid).then(wasSeeded => {
             if (wasSeeded) {
                 toast({
                     title: 'Sample Data Loaded',
@@ -118,19 +118,19 @@ export default function Dashboard() {
   }, [firestore, user, toast]);
 
   const inventoryQuery = useMemoFirebase(() =>
-    firestore && user ? collection(firestore, 'inventory') : null
+    firestore && user ? collection(firestore, 'users', user.uid, 'inventory') : null
   , [firestore, user]);
   const lowStockQuery = useMemoFirebase(() =>
-    firestore && user ? query(collection(firestore, 'inventory'), where('quantity', '<', 10)) : null
+    firestore && user ? query(collection(firestore, 'users', user.uid, 'inventory'), where('quantity', '<', 10)) : null
   , [firestore, user]);
   const salesQuery = useMemoFirebase(() =>
-    firestore && user ? collection(firestore, 'sales') : null
+    firestore && user ? collection(firestore, 'users', user.uid, 'sales') : null
   , [firestore, user]);
   const pendingOrdersQuery = useMemoFirebase(() =>
-    firestore && user ? query(collection(firestore, 'orders'), where('status', '==', 'Pending')) : null
+    firestore && user ? query(collection(firestore, 'users', user.uid, 'orders'), where('status', '==', 'Pending')) : null
   , [firestore, user]);
   const recentSalesQuery = useMemoFirebase(() =>
-    firestore && user ? query(collection(firestore, 'sales'), limit(5)) : null
+    firestore && user ? query(collection(firestore, 'users', user.uid, 'sales'), limit(5)) : null
   , [firestore, user]);
 
   const { data: inventoryItems } = useCollection<InventoryItem>(inventoryQuery);

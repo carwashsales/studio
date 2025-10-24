@@ -69,7 +69,8 @@ const getStatusBadge = (status: string) => {
 
 function OrderDialog({ mode, order, children }: { mode: 'add' | 'edit', order?: Order, children: React.ReactNode }) {
   const firestore = useFirestore();
-  const ordersCollection = useMemoFirebase(() => firestore ? collection(firestore, 'orders') : null, [firestore]);
+  const { user } = useUser();
+  const ordersCollection = useMemoFirebase(() => (firestore && user ? collection(firestore, 'users', user.uid, 'orders') : null), [firestore, user]);
   const { toast } = useToast();
 
   const [supplier, setSupplier] = React.useState(order?.supplier || '');
@@ -84,7 +85,7 @@ function OrderDialog({ mode, order, children }: { mode: 'add' | 'edit', order?: 
   }, [open, order]);
 
   const handleSubmit = () => {
-    if (!firestore) return;
+    if (!firestore || !user) return;
     const orderData = {
       supplier,
       total: parseFloat(total) || 0,
@@ -97,7 +98,7 @@ function OrderDialog({ mode, order, children }: { mode: 'add' | 'edit', order?: 
       addDocumentNonBlocking(ordersCollection, orderData);
       toast({ title: "Order Created", description: `New order for ${supplier} has been placed.` });
     } else if (mode === 'edit' && order) {
-      const orderRef = doc(firestore, 'orders', order.id);
+      const orderRef = doc(firestore, 'users', user.uid, 'orders', order.id);
       setDocumentNonBlocking(orderRef, orderData, { merge: true });
       toast({ title: "Order Updated", description: `Order ${order.id} has been updated.` });
     }
@@ -167,7 +168,7 @@ export default function OrdersPage() {
   }, [user, isUserLoading, router]);
 
   const ordersCollection = useMemoFirebase(
-    () => (firestore && user ? collection(firestore, 'orders') : null),
+    () => (firestore && user ? collection(firestore, 'users', user.uid, 'orders') : null),
     [firestore, user]
   );
   const { data: orders, isLoading } = useCollection<Order>(ordersCollection);
@@ -179,8 +180,8 @@ export default function OrdersPage() {
   }, [orders, statusFilter]);
 
   const updateOrderStatus = async (orderId: string, status: Order['status']) => {
-    if (!firestore) return;
-    const orderRef = doc(firestore, 'orders', orderId);
+    if (!firestore || !user) return;
+    const orderRef = doc(firestore, 'users', user.uid, 'orders', orderId);
     await updateDoc(orderRef, { status });
     toast({
         title: 'Order Updated',
@@ -189,8 +190,8 @@ export default function OrdersPage() {
   };
 
   const handleDeleteOrder = (orderId: string) => {
-    if (!firestore) return;
-    const orderRef = doc(firestore, 'orders', orderId);
+    if (!firestore || !user) return;
+    const orderRef = doc(firestore, 'users', user.uid, 'orders', orderId);
     deleteDocumentNonBlocking(orderRef);
     toast({ variant: "destructive", title: "Order Deleted", description: `Order ${orderId} has been deleted.` });
   };

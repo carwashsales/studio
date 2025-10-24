@@ -40,7 +40,7 @@ export default function StaffPage() {
 
   const [newStaffName, setNewStaffName] = React.useState('');
 
-  const staffCollection = useMemoFirebase(() => (firestore && user ? collection(firestore, 'staff') : null), [firestore, user]);
+  const staffCollection = useMemoFirebase(() => (firestore && user ? collection(firestore, 'users', user.uid, 'staff') : null), [firestore, user]);
   const { data: staff, isLoading: staffLoading } = useCollection<Staff>(staffCollection);
 
   const handleAddStaff = (e: React.FormEvent) => {
@@ -63,8 +63,8 @@ export default function StaffPage() {
   };
 
   const handleDeleteStaff = (staffId: string) => {
-    if (!firestore) return;
-    const docRef = doc(firestore, 'staff', staffId);
+    if (!firestore || !user) return;
+    const docRef = doc(firestore, 'users', user.uid, 'staff', staffId);
     deleteDoc(docRef);
     toast({
       title: 'Staff Removed',

@@ -201,48 +201,50 @@
   "firestore": {
     "structure": [
       {
-        "path": "users",
+        "path": "users/{userId}",
         "schema": {
           "$ref": "#/entities/User"
         },
-        "description": "Stores user profile information."
-      },
-      {
-        "path": "inventory",
-        "schema": {
-          "$ref": "#/entities/InventoryItem"
-        },
-        "description": "Stores inventory items. Each document represents a specific item in the carwash inventory."
-      },
-      {
-        "path": "orders",
-        "schema": {
-          "$ref": "#/entities/Order"
-        },
-        "description": "Stores orders for new supplies. Each document represents a specific order."
-      },
-      {
-        "path": "sales",
-        "schema": {
-          "$ref": "#/entities/CarWashSale"
-        },
-        "description": "Stores car wash sale transactions.  Each document represents a single sale transaction."
-      },
-      {
-        "path": "users/{userId}/services",
-        "schema": {
-          "$ref": "#/entities/Price"
-        },
-        "description": "Stores pricing information for a specific user's car wash services."
-      },
-      {
-        "path": "staff",
-        "schema": {
-          "$ref": "#/entities/Staff"
-        },
-        "description": "Stores staff members. Each document represents a single staff member."
+        "description": "Stores user profile information.",
+        "subcollections": [
+          {
+            "path": "inventory",
+            "schema": {
+              "$ref": "#/entities/InventoryItem"
+            },
+            "description": "Stores inventory items for a specific user."
+          },
+          {
+            "path": "orders",
+            "schema": {
+              "$ref": "#/entities/Order"
+            },
+            "description": "Stores orders for a specific user."
+          },
+          {
+            "path": "sales",
+            "schema": {
+              "$ref": "#/entities/CarWashSale"
+            },
+            "description": "Stores sales transactions for a specific user."
+          },
+          {
+            "path": "services",
+            "schema": {
+              "$ref": "#/entities/Price"
+            },
+            "description": "Stores pricing information for a specific user's car wash services."
+          },
+          {
+            "path": "staff",
+            "schema": {
+              "$ref": "#/entities/Staff"
+            },
+            "description": "Stores staff members for a specific user."
+          }
+        ]
       }
     ],
-    "reasoning": "The Firestore structure is designed to manage inventory, orders, sales, pricing and staff for the CleanSweep Inventory application. It prioritizes authorization independence and data clarity. User authentication is handled via email/password. Pricing data is stored in a subcollection under each user to allow for per-user customization, initialized with default values on registration. Other collections are global as they are managed by the app owner."
+    "reasoning": "The Firestore structure is designed to be multi-tenant, with all primary data collections (inventory, orders, sales, pricing, staff) stored under a specific user's document. This ensures data isolation and security, as users can only access their own data. User authentication is handled via email/password. Pricing data is initialized with default values on user registration."
   }
 }
