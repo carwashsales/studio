@@ -265,7 +265,7 @@ export default function OrdersPage() {
                 </TableCell>
                 <TableCell>{getStatusBadge(order.status)}</TableCell>
                 <TableCell className="hidden md:table-cell">
-                  {format(new Date(order.date), 'PPP')}
+                  {format(new Date(order.date), 'Pp')}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end items-center">

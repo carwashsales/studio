@@ -287,7 +287,7 @@ export default function Dashboard() {
                       {activity.service}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
-                      {format(new Date(activity.date), 'PPP')}
+                      {format(new Date(activity.date), 'Pp')}
                     </TableCell>
                     <TableCell className="text-right flex justify-end items-center">
                       {activity.amount.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />

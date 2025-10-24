@@ -311,7 +311,7 @@ export default function SalesPage() {
                   <TableRow key={sale.id}>
                     <TableCell className="font-medium">{sale.service}</TableCell>
                     <TableCell className="hidden sm:table-cell">{sale.staffName}</TableCell>
-                    <TableCell className="hidden md:table-cell">{format(new Date(sale.date), 'PPP')}</TableCell>
+                    <TableCell className="hidden md:table-cell">{format(new Date(sale.date), 'Pp')}</TableCell>
                     <TableCell className="text-right flex justify-end items-center">
                       {sale.amount.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
                     </TableCell>
