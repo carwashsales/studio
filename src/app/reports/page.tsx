@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -33,9 +34,16 @@ import type { InventoryItem, Order, CarWashSale } from "@/types";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 
-const usageChartConfig = {
-  quantity: { label: "Quantity", color: "hsl(var(--primary))" },
-} satisfies ChartConfig;
+const COLORS = [
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
+  "hsl(207, 70%, 80%)",
+  "hsl(145, 63%, 70%)",
+  "hsl(43, 74%, 80%)",
+];
 
 const costChartConfig = {
   total: { label: "Cost", color: "hsl(var(--accent))" },
@@ -109,10 +117,28 @@ export default function ReportsPage() {
       fill: salesPieChartConfig[service as keyof typeof salesPieChartConfig]?.color || 'hsl(var(--muted))'
     }));
   }, [sales]);
-
-  const inventoryUsageData = React.useMemo(() => {
-    return inventoryItems || [];
+  
+  const inventoryChartData = React.useMemo(() => {
+    if (!inventoryItems) return [];
+    return inventoryItems.map((item, index) => ({
+        name: item.name,
+        quantity: item.quantity,
+        fill: COLORS[index % COLORS.length]
+    }));
   }, [inventoryItems]);
+
+  const inventoryChartConfig = React.useMemo(() => {
+    if (!inventoryItems) return {};
+    const config: ChartConfig = {};
+    inventoryItems.forEach((item, index) => {
+        config[item.name] = {
+            label: item.name,
+            color: COLORS[index % COLORS.length]
+        }
+    });
+    return config;
+  }, [inventoryItems]);
+
 
   if (isUserLoading || !user) {
     return <div>Loading...</div>;
@@ -122,20 +148,22 @@ export default function ReportsPage() {
     <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Inventory Levels</CardTitle>
+          <CardTitle className="font-headline">Inventory Composition</CardTitle>
           <CardDescription>
-            Current stock levels of key inventory items.
+            Proportional breakdown of items in your inventory.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={usageChartConfig} className="h-[300px] w-full">
-            <BarChart data={inventoryUsageData}>
-              <CartesianGrid vertical={false} />
-              <XAxis dataKey="name" tickLine={false} axisLine={false} />
-              <YAxis tickLine={false} axisLine={false} />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="quantity" fill="var(--color-quantity)" radius={8} />
-            </BarChart>
+        <CardContent className="flex justify-center">
+          <ChartContainer config={inventoryChartConfig} className="mx-auto aspect-square h-[300px]">
+            <PieChart>
+              <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
+              <Pie data={inventoryChartData} dataKey="quantity" nameKey="name" innerRadius={50} strokeWidth={5}>
+                 {inventoryChartData.map((entry) => (
+                    <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                  ))}
+              </Pie>
+              <Legend />
+            </PieChart>
           </ChartContainer>
         </CardContent>
       </Card>
@@ -197,3 +225,4 @@ export default function ReportsPage() {
     </div>
   );
 }
+
