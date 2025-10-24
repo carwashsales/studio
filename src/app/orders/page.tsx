@@ -17,16 +17,18 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, ListFilter } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
 import * as React from 'react';
-import { useCollection, useFirestore, useMemoFirebase, useUser, addDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import { collection, doc, updateDoc } from 'firebase/firestore';
 import type { Order } from '@/types';
 import { format } from 'date-fns';
@@ -46,6 +48,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 
+type StatusFilter = "all" | Order['status'];
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -64,27 +67,41 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-function OrderDialog({ children }: { children: React.ReactNode }) {
+function OrderDialog({ mode, order, children }: { mode: 'add' | 'edit', order?: Order, children: React.ReactNode }) {
   const firestore = useFirestore();
   const ordersCollection = useMemoFirebase(() => firestore ? collection(firestore, 'orders') : null, [firestore]);
   const { toast } = useToast();
 
-  const [supplier, setSupplier] = React.useState('');
-  const [total, setTotal] = React.useState('');
+  const [supplier, setSupplier] = React.useState(order?.supplier || '');
+  const [total, setTotal] = React.useState(order?.total?.toString() || '');
   const [open, setOpen] = React.useState(false);
 
+  React.useEffect(() => {
+    if (open) {
+      setSupplier(order?.supplier || '');
+      setTotal(order?.total?.toString() || '');
+    }
+  }, [open, order]);
+
   const handleSubmit = () => {
-    if (!ordersCollection) return;
-    const newOrder: Omit<Order, 'id'> = {
+    if (!firestore) return;
+    const orderData = {
       supplier,
       total: parseFloat(total) || 0,
-      date: new Date().toISOString(),
-      status: 'Pending',
+      date: order?.date || new Date().toISOString(),
+      status: order?.status || 'Pending',
     };
-    addDocumentNonBlocking(ordersCollection, newOrder);
-    toast({ title: "Order Created", description: `New order for ${supplier} has been placed.` });
-    setSupplier('');
-    setTotal('');
+
+    if (mode === 'add') {
+      if (!ordersCollection) return;
+      addDocumentNonBlocking(ordersCollection, orderData);
+      toast({ title: "Order Created", description: `New order for ${supplier} has been placed.` });
+    } else if (mode === 'edit' && order) {
+      const orderRef = doc(firestore, 'orders', order.id);
+      setDocumentNonBlocking(orderRef, orderData, { merge: true });
+      toast({ title: "Order Updated", description: `Order ${order.id} has been updated.` });
+    }
+    
     setOpen(false);
   };
 
@@ -93,9 +110,9 @@ function OrderDialog({ children }: { children: React.ReactNode }) {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create New Order</DialogTitle>
+          <DialogTitle>{mode === 'add' ? 'Create New Order' : 'Edit Order'}</DialogTitle>
           <DialogDescription>
-            Enter the details for the new supply order.
+            {mode === 'add' ? 'Enter the details for the new supply order.' : `Editing order ${order?.id}`}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -126,22 +143,22 @@ function OrderDialog({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <DialogFooter>
-            <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
-            </DialogClose>
-          <Button onClick={handleSubmit}>Create Order</Button>
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button onClick={handleSubmit}>{mode === 'add' ? 'Create Order' : 'Save Changes'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-
 export default function OrdersPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('all');
   
   React.useEffect(() => {
     if (!isUserLoading && !user) {
@@ -155,15 +172,28 @@ export default function OrdersPage() {
   );
   const { data: orders, isLoading } = useCollection<Order>(ordersCollection);
 
-  const handleMarkAsReceived = async (orderId: string) => {
+  const filteredOrders = React.useMemo(() => {
+    if (!orders) return [];
+    if (statusFilter === 'all') return orders;
+    return orders.filter(order => order.status === statusFilter);
+  }, [orders, statusFilter]);
+
+  const updateOrderStatus = async (orderId: string, status: Order['status']) => {
     if (!firestore) return;
     const orderRef = doc(firestore, 'orders', orderId);
-    await updateDoc(orderRef, { status: 'Received' });
+    await updateDoc(orderRef, { status });
     toast({
         title: 'Order Updated',
-        description: 'Order has been marked as received.',
+        description: `Order has been marked as ${status}.`,
     });
-  }
+  };
+
+  const handleDeleteOrder = (orderId: string) => {
+    if (!firestore) return;
+    const orderRef = doc(firestore, 'orders', orderId);
+    deleteDocumentNonBlocking(orderRef);
+    toast({ variant: "destructive", title: "Order Deleted", description: `Order ${orderId} has been deleted.` });
+  };
 
   if (isUserLoading || !user) {
     return <div>Loading...</div>;
@@ -179,22 +209,43 @@ export default function OrdersPage() {
               Create and manage orders for new supplies.
             </CardDescription>
           </div>
-          <OrderDialog>
-            <Button size="sm" className="h-8 gap-1">
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                New Order
-                </span>
-            </Button>
-          </OrderDialog>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 gap-1">
+                  <ListFilter className="h-3.5 w-3.5" />
+                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    Filter
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Filter by status</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuCheckboxItem checked={statusFilter === 'all'} onCheckedChange={() => setStatusFilter('all')}>All</DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem checked={statusFilter === 'Pending'} onCheckedChange={() => setStatusFilter('Pending')}>Pending</DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem checked={statusFilter === 'Shipped'} onCheckedChange={() => setStatusFilter('Shipped')}>Shipped</DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem checked={statusFilter === 'Received'} onCheckedChange={() => setStatusFilter('Received')}>Received</DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem checked={statusFilter === 'Cancelled'} onCheckedChange={() => setStatusFilter('Cancelled')}>Cancelled</DropdownMenuCheckboxItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <OrderDialog mode="add">
+              <Button size="sm" className="h-8 gap-1">
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  New Order
+                  </span>
+              </Button>
+            </OrderDialog>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Order ID</TableHead>
-              <TableHead className="hidden sm:table-cell">Supplier</TableHead>
+              <TableHead className="hidden sm:table-cell">Order ID</TableHead>
+              <TableHead>Supplier</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="hidden md:table-cell">Date</TableHead>
               <TableHead className="text-right">Total</TableHead>
@@ -205,18 +256,20 @@ export default function OrdersPage() {
           </TableHeader>
           <TableBody>
             {isLoading && <TableRow><TableCell colSpan={6}>Loading...</TableCell></TableRow>}
-            {orders && orders.map((order) => (
+            {filteredOrders && filteredOrders.map((order) => (
               <TableRow key={order.id}>
-                <TableCell className="font-medium">{order.id}</TableCell>
-                <TableCell className="hidden sm:table-cell">
+                <TableCell className="hidden sm:table-cell font-medium truncate max-w-[100px]">{order.id}</TableCell>
+                <TableCell>
                   {order.supplier}
                 </TableCell>
                 <TableCell>{getStatusBadge(order.status)}</TableCell>
                 <TableCell className="hidden md:table-cell">
                   {format(new Date(order.date), 'PPP')}
                 </TableCell>
-                <TableCell className="text-right flex justify-end items-center">
-                  {order.total.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
+                <TableCell className="text-right">
+                  <div className="flex justify-end items-center">
+                    {order.total.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
+                  </div>
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
@@ -228,12 +281,16 @@ export default function OrdersPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem disabled>View Details</DropdownMenuItem>
-                       {order.status === 'Shipped' && (
-                        <DropdownMenuItem onClick={() => handleMarkAsReceived(order.id)}>
-                            Mark as Received
-                        </DropdownMenuItem>
-                       )}
+                      <OrderDialog mode="edit" order={order}>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>
+                      </OrderDialog>
+                      <DropdownMenuItem onClick={() => handleDeleteOrder(order.id)}>Delete</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                       {order.status !== 'Shipped' && <DropdownMenuItem onClick={() => updateOrderStatus(order.id, 'Shipped')}>Mark as Shipped</DropdownMenuItem>}
+                       {order.status === 'Shipped' && <DropdownMenuItem onClick={() => updateOrderStatus(order.id, 'Received')}>Mark as Received</DropdownMenuItem>}
+                       {order.status !== 'Cancelled' && <DropdownMenuItem onClick={() => updateOrderStatus(order.id, 'Cancelled')}>Mark as Cancelled</DropdownMenuItem>}
+                       {order.status === 'Cancelled' && <DropdownMenuItem onClick={() => updateOrderStatus(order.id, 'Pending')}>Mark as Pending</DropdownMenuItem>}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
