@@ -43,6 +43,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
+import Image from 'next/image';
 
 type StatusFilter = "all" | "in-stock" | "low-stock" | "out-of-stock";
 
@@ -83,6 +84,7 @@ function ItemDialog({ mode, item, children }: { mode: 'add' | 'edit', item?: Inv
   const [name, setName] = React.useState(item?.name || '');
   const [category, setCategory] = React.useState(item?.category || '');
   const [quantity, setQuantity] = React.useState(item?.quantity || 0);
+  const [purchasePrice, setPurchasePrice] = React.useState(item?.purchasePrice || 0);
   const [open, setOpen] = React.useState(false);
   
   React.useEffect(() => {
@@ -90,11 +92,13 @@ function ItemDialog({ mode, item, children }: { mode: 'add' | 'edit', item?: Inv
       setName(item.name);
       setCategory(item.category ?? '');
       setQuantity(item.quantity);
+      setPurchasePrice(item.purchasePrice || 0);
     } else if (open && mode === 'add') {
       // Reset form on open for add mode
       setName('');
       setCategory('');
       setQuantity(0);
+      setPurchasePrice(0);
     }
   }, [open, item, mode]);
 
@@ -102,12 +106,12 @@ function ItemDialog({ mode, item, children }: { mode: 'add' | 'edit', item?: Inv
     if (!firestore || !user) return;
     if (mode === 'add') {
         if (!inventoryCollection) return;
-        const newItem: Omit<InventoryItem, 'id'> = { name, category, quantity };
+        const newItem: Omit<InventoryItem, 'id'> = { name, category, quantity, purchasePrice };
         addDocumentNonBlocking(inventoryCollection, newItem);
         toast({ title: "Item Added", description: `${name} has been added to the inventory.`});
     } else if (mode === 'edit' && item) {
         const itemRef = doc(firestore, 'users', user.uid, 'inventory', item.id);
-        const updatedItem: Partial<InventoryItem> = { name, category, quantity };
+        const updatedItem: Partial<InventoryItem> = { name, category, quantity, purchasePrice };
         setDocumentNonBlocking(itemRef, updatedItem, { merge: true });
         toast({ title: "Item Updated", description: `${name} has been updated.`});
     }
@@ -133,6 +137,10 @@ function ItemDialog({ mode, item, children }: { mode: 'add' | 'edit', item?: Inv
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="quantity" className="text-right">Quantity</Label>
             <Input id="quantity" type="number" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="purchasePrice" className="text-right">Purchase Price</Label>
+            <Input id="purchasePrice" type="number" value={purchasePrice} onChange={(e) => setPurchasePrice(Number(e.target.value))} className="col-span-3" />
           </div>
         </div>
         <DialogFooter>
@@ -243,24 +251,32 @@ export default function InventoryPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Item Name</TableHead>
-              <TableHead className="hidden md:table-cell">Category</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Quantity</TableHead>
+              <TableHead className="hidden md:table-cell text-right">Purchase Price</TableHead>
+              <TableHead className="text-right">Total Value</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={5}>Loading...</TableCell></TableRow>}
+            {isLoading && <TableRow><TableCell colSpan={6}>Loading...</TableCell></TableRow>}
             {filteredItems && filteredItems.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.name}</TableCell>
-                <TableCell className="hidden md:table-cell">
-                  {item.category}
-                </TableCell>
                 <TableCell>{getStatusBadge(item.quantity)}</TableCell>
                 <TableCell className="text-right">{item.quantity}</TableCell>
+                <TableCell className="hidden md:table-cell text-right">
+                  <div className="flex justify-end items-center">
+                    {(item.purchasePrice || 0).toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                    <div className="flex justify-end items-center">
+                        {(item.quantity * (item.purchasePrice || 0)).toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
+                    </div>
+                </TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

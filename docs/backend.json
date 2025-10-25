@@ -18,6 +18,10 @@
         "quantity": {
           "type": "number",
           "description": "Current quantity of the item in stock."
+        },
+        "purchasePrice": {
+          "type": "number",
+          "description": "The cost of the item when it was purchased."
         }
       },
       "required": [

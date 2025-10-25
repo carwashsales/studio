@@ -38,6 +38,7 @@ type ReportType =
     | "sales-by-staff"
     | "profit-loss"
     | "purchases-by-date"
+    | "inventory-value"
     | "inventory";
 
 const reportsList: { id: ReportType; title: string; description: string, requiresDate: boolean }[] = [
@@ -46,6 +47,7 @@ const reportsList: { id: ReportType; title: string; description: string, require
     { id: "sales-by-staff", title: "Sales by Staff", description: "Summary of sales performance per staff member.", requiresDate: true },
     { id: "profit-loss", title: "Profit and Loss", description: "Calculate profit after expenses.", requiresDate: true },
     { id: "purchases-by-date", title: "Purchases by Date", description: "Detailed list of supply orders received.", requiresDate: true },
+    { id: "inventory-value", title: "Inventory Value", description: "Total value of current stock.", requiresDate: false },
     { id: "inventory", title: "Inventory Report", description: "Current stock levels for all items.", requiresDate: false },
 ];
 
@@ -138,6 +140,8 @@ export default function ReportsPage() {
             return <ProfitLossReport sales={sales} orders={orders} />;
         case "purchases-by-date":
             return <PurchasesByDateTable orders={orders} />;
+        case "inventory-value":
+            return <InventoryValueTable inventory={inventoryItems} />;
         case "inventory":
             return <InventoryTable inventory={inventoryItems} />;
         default:
@@ -384,6 +388,41 @@ function InventoryTable({ inventory }: { inventory: InventoryItem[] | null }) {
                     </TableRow>
                 ))}
             </TableBody>
+        </Table>
+    );
+}
+
+function InventoryValueTable({ inventory }: { inventory: InventoryItem[] | null }) {
+    if (!inventory) return <p>No inventory data available.</p>;
+
+    const totalValue = inventory.reduce((acc, item) => acc + (item.quantity * (item.purchasePrice || 0)), 0);
+
+    return (
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Item Name</TableHead>
+                    <TableHead className="text-right">Quantity</TableHead>
+                    <TableHead className="text-right">Purchase Price</TableHead>
+                    <TableHead className="text-right">Total Value</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {inventory.map(item => (
+                    <TableRow key={item.id}>
+                        <TableCell className="font-medium">{item.name}</TableCell>
+                        <TableCell className="text-right">{item.quantity}</TableCell>
+                        <TableCell className="text-right">{valueFormatter(item.purchasePrice || 0)}</TableCell>
+                        <TableCell className="text-right">{valueFormatter(item.quantity * (item.purchasePrice || 0))}</TableCell>
+                    </TableRow>
+                ))}
+            </TableBody>
+            <TableFooter>
+                <TableRow>
+                    <TableCell colSpan={3} className="text-right font-bold">Total Inventory Value</TableCell>
+                    <TableCell className="text-right font-bold">{valueFormatter(totalValue)}</TableCell>
+                </TableRow>
+            </TableFooter>
         </Table>
     );
 }

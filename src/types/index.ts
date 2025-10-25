@@ -3,6 +3,7 @@ export type InventoryItem = {
   name: string;
   category: string;
   quantity: number;
+  purchasePrice?: number;
 };
 
 export type Order = {
