@@ -20,7 +20,7 @@ import {
 import { DonutChart } from "@tremor/react";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
-import type { CarWashSale, InventoryItem } from "@/types";
+import type { CarWashSale, InventoryItem, Order } from "@/types";
 import { format, startOfDay, endOfDay } from "date-fns";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,7 @@ const reportsList: { id: ReportType; title: string; description: string, require
     { id: "sales-by-date", title: "Sales by Date", description: "Detailed list of sales transactions.", requiresDate: true },
     { id: "sales-by-service", title: "Sales by Service", description: "Breakdown of revenue by service type.", requiresDate: true },
     { id: "sales-by-staff", title: "Sales by Staff", description: "Summary of sales performance per staff member.", requiresDate: true },
-    { id: "profit-loss", title: "Profit and Loss", description: "Calculate profit after commissions.", requiresDate: true },
+    { id: "profit-loss", title: "Profit and Loss", description: "Calculate profit after expenses.", requiresDate: true },
     { id: "inventory", title: "Inventory Report", description: "Current stock levels for all items.", requiresDate: false },
 ];
 
@@ -68,12 +68,22 @@ export default function ReportsPage() {
     );
   }, [firestore, user, dateRange]);
 
+  const ordersQuery = useMemoFirebase(() => {
+    if (!firestore || !user || !dateRange?.from || !dateRange?.to) return null;
+    return query(
+        collection(firestore, "users", user.uid, "orders"),
+        where("date", ">=", dateRange.from.toISOString()),
+        where("date", "<=", dateRange.to.toISOString())
+    );
+  }, [firestore, user, dateRange]);
+
   const inventoryQuery = useMemoFirebase(() => 
     (firestore && user ? collection(firestore, 'users', user.uid, "inventory") : null),
     [firestore, user]
   );
   
   const { data: sales, isLoading: salesLoading } = useCollection<CarWashSale>(salesQuery);
+  const { data: orders, isLoading: ordersLoading } = useCollection<Order>(ordersQuery);
   const { data: inventoryItems, isLoading: inventoryLoading } = useCollection<InventoryItem>(inventoryQuery);
 
   React.useEffect(() => {
@@ -89,6 +99,7 @@ export default function ReportsPage() {
     if (!reportData) return null;
 
     const showDatePicker = reportData.requiresDate;
+    const isLoading = (salesLoading || ordersLoading) && showDatePicker || inventoryLoading && !showDatePicker;
 
     return (
         <Card>
@@ -105,9 +116,8 @@ export default function ReportsPage() {
                 </div>
             </CardHeader>
             <CardContent>
-                {salesLoading && showDatePicker && <p>Loading report data...</p>}
-                {inventoryLoading && !showDatePicker && <p>Loading report data...</p>}
-                {!salesLoading && !inventoryLoading && renderReportDetails()}
+                {isLoading && <p>Loading report data...</p>}
+                {!isLoading && renderReportDetails()}
             </CardContent>
         </Card>
     );
@@ -122,7 +132,7 @@ export default function ReportsPage() {
         case "sales-by-staff":
             return <SalesByStaffChart sales={sales} />;
         case "profit-loss":
-            return <ProfitLossReport sales={sales} />;
+            return <ProfitLossReport sales={sales} orders={orders} />;
         case "inventory":
             return <InventoryTable inventory={inventoryItems} />;
         default:
@@ -267,27 +277,32 @@ function SalesByStaffChart({ sales }: { sales: CarWashSale[] | null }) {
     );
 }
 
-function ProfitLossReport({ sales }: { sales: CarWashSale[] | null }) {
+function ProfitLossReport({ sales, orders }: { sales: CarWashSale[] | null, orders: Order[] | null }) {
     const reportData = React.useMemo(() => {
-        if (!sales) return { totalRevenue: 0, totalCommission: 0, netProfit: 0 };
-        const totalRevenue = sales.reduce((acc, sale) => acc + sale.amount, 0);
-        const totalCommission = sales.reduce((acc, sale) => acc + sale.commission, 0);
-        const netProfit = totalRevenue - totalCommission;
-        return { totalRevenue, totalCommission, netProfit };
-    }, [sales]);
+        const totalRevenue = sales?.reduce((acc, sale) => acc + sale.amount, 0) || 0;
+        const totalCommission = sales?.reduce((acc, sale) => acc + sale.commission, 0) || 0;
+        const totalOrderCost = orders?.filter(o => o.status === 'Received').reduce((acc, order) => acc + order.total, 0) || 0;
+        const totalExpenses = totalCommission + totalOrderCost;
+        const netProfit = totalRevenue - totalExpenses;
+        return { totalRevenue, totalCommission, totalOrderCost, totalExpenses, netProfit };
+    }, [sales, orders]);
 
     return (
         <div className="space-y-4">
              <Card>
                 <CardHeader><CardTitle>Summary</CardTitle></CardHeader>
-                <CardContent className="grid grid-cols-3 gap-4 text-center">
+                <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                     <div>
                         <p className="text-muted-foreground">Total Revenue</p>
                         <p className="text-2xl font-bold">{valueFormatter(reportData.totalRevenue)}</p>
                     </div>
                     <div>
-                        <p className="text-muted-foreground">Total Commissions Paid</p>
-                        <p className="text-2xl font-bold text-destructive">{valueFormatter(reportData.totalCommission)}</p>
+                        <p className="text-muted-foreground">Total Expenses</p>
+                        <p className="text-2xl font-bold text-destructive">{valueFormatter(reportData.totalExpenses)}</p>
+                    </div>
+                     <div>
+                        <p className="text-muted-foreground">Commissions Paid</p>
+                        <p className="text-lg font-bold">{valueFormatter(reportData.totalCommission)}</p>
                     </div>
                      <div>
                         <p className="text-muted-foreground">Net Profit</p>
