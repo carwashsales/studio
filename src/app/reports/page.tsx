@@ -29,6 +29,7 @@ import type { DateRange } from "react-day-picker";
 import Image from "next/image";
 import { List, ListItem } from "@/components/ui/list";
 import { ChevronRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 type ReportType = 
     | "sales-by-date"
