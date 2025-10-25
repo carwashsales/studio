@@ -135,51 +135,58 @@ export default function Dashboard() {
 
   const salesChartData = React.useMemo(() => {
     if (!salesData) return [];
-
+  
+    const now = new Date();
     if (salesView === 'monthly') {
-        const monthTemplate: { [key: string]: { date: string; Sales: number; sortKey: number } } = {};
-        const today = new Date();
-        for (let i = 5; i >= 0; i--) {
-            const date = subMonths(today, i);
-            const monthName = format(date, 'MMM');
-            const year = getYear(date);
-            const month = getMonth(date);
-            const sortKey = year * 100 + month;
-            monthTemplate[`${year}-${month}`] = { date: monthName, Sales: 0, sortKey };
-        }
-
-        salesData.forEach(sale => {
-          const saleDate = new Date(sale.date);
-          const year = getYear(saleDate);
-          const month = getMonth(saleDate);
-          const key = `${year}-${month}`;
-          if (monthTemplate[key]) {
-            monthTemplate[key].Sales += sale.amount;
-          }
-        });
-
-        return Object.values(monthTemplate).sort((a, b) => a.sortKey - b.sortKey);
-    } else { // Daily view
-        const dayTemplate: { [key: string]: { date: string; Sales: number } } = {};
-        const today = startOfDay(new Date());
-        for (let i = 29; i >= 0; i--) {
-            const date = subDays(today, i);
-            const dayString = format(date, 'MMM d');
-            dayTemplate[dayString] = { date: dayString, Sales: 0 };
-        }
-
-        salesData.forEach(sale => {
-            const saleDate = startOfDay(new Date(sale.date));
-            const dayString = format(saleDate, 'MMM d');
-            if (dayTemplate[dayString]) {
-                dayTemplate[dayString].Sales += sale.amount;
+      const monthTemplate: { [key: string]: { date: string; Sales: number; sortKey: number } } = {};
+      const sixMonthsAgo = subMonths(now, 5);
+      
+      for (let i = 0; i < 6; i++) {
+        const date = subMonths(now, 5 - i);
+        const monthName = format(date, 'MMM');
+        const year = getYear(date);
+        const month = getMonth(date);
+        const sortKey = year * 100 + month;
+        monthTemplate[`${year}-${month}`] = { date: monthName, Sales: 0, sortKey };
+      }
+  
+      salesData.forEach(sale => {
+        const saleDate = new Date(sale.date);
+        if (saleDate >= sixMonthsAgo) {
+            const year = getYear(saleDate);
+            const month = getMonth(saleDate);
+            const key = `${year}-${month}`;
+            if (monthTemplate[key]) {
+                monthTemplate[key].Sales += sale.amount;
             }
-        });
-        
-        return Object.values(dayTemplate);
+        }
+      });
+  
+      return Object.values(monthTemplate).sort((a, b) => a.sortKey - b.sortKey);
+    } else { // Daily view for the last 30 days
+      const dayTemplate: { [key: string]: { date: string; Sales: number } } = {};
+      const thirtyDaysAgo = startOfDay(subDays(now, 29));
+      
+      for (let i = 0; i < 30; i++) {
+        const date = subDays(now, 29 - i);
+        const dayString = format(date, 'MMM d');
+        dayTemplate[dayString] = { date: dayString, Sales: 0 };
+      }
+      
+      salesData.forEach(sale => {
+        const saleDate = startOfDay(new Date(sale.date));
+        if (saleDate >= thirtyDaysAgo) {
+          const dayString = format(saleDate, 'MMM d');
+          if (dayTemplate[dayString]) {
+            dayTemplate[dayString].Sales += sale.amount;
+          }
+        }
+      });
+      
+      return Object.values(dayTemplate);
     }
   }, [salesData, salesView]);
-  
+
   if (isUserLoading || !user) {
     return <div>Loading...</div>;
   }
@@ -244,7 +251,7 @@ export default function Dashboard() {
                 </CardDescription>
               </div>
               <div className="flex items-center space-x-2">
-                <Label htmlFor="sales-view">Monthly</Label>
+                <Label htmlFor="sales-view">{salesView === 'daily' ? 'Daily' : 'Monthly'}</Label>
                 <Switch 
                   id="sales-view"
                   checked={salesView === 'monthly'}
