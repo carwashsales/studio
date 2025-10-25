@@ -14,6 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -179,6 +180,14 @@ export default function OrdersPage() {
     return orders.filter(order => order.status === statusFilter);
   }, [orders, statusFilter]);
 
+  const totalReceived = React.useMemo(() => {
+    if (!orders) return 0;
+    return orders
+      .filter(order => order.status === 'Received')
+      .reduce((acc, order) => acc + order.total, 0);
+  }, [orders]);
+
+
   const updateOrderStatus = async (orderId: string, status: Order['status']) => {
     if (!firestore || !user) return;
     const orderRef = doc(firestore, 'users', user.uid, 'orders', orderId);
@@ -298,6 +307,16 @@ export default function OrdersPage() {
               </TableRow>
             ))}
           </TableBody>
+          <TableFooter>
+            <TableRow>
+              <TableCell colSpan={5} className="text-right font-bold">Total Cost of Received Orders</TableCell>
+              <TableCell className="text-right font-bold">
+                <div className="flex justify-end items-center">
+                  {totalReceived.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
+                </div>
+              </TableCell>
+            </TableRow>
+          </TableFooter>
         </Table>
       </CardContent>
     </Card>
