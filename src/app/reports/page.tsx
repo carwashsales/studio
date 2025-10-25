@@ -76,7 +76,7 @@ export default function ReportsPage() {
     return query(
         collection(firestore, "users", user.uid, "orders"),
         where("date", ">=", dateRange.from.toISOString()),
-        where("date", "<=", date.to.toISOString())
+        where("date", "<=", dateRange.to.toISOString())
     );
   }, [firestore, user, dateRange]);
 
