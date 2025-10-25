@@ -212,7 +212,7 @@ function SalesByServiceChart({ sales }: { sales: CarWashSale[] | null }) {
                 index="name"
                 valueFormatter={customValueFormatter}
                 label={`${customValueFormatter(totalAmount)}`}
-                colors={['cyan', 'blue', 'indigo', 'violet', 'fuchsia']}
+                colors={["blue-600", "sky-500", "cyan-400", "teal-500", "emerald-500", "lime-600"]}
                 className="h-[350px]"
             />
              <ul className="mt-4 space-y-2 text-sm text-muted-foreground w-full max-w-md">
