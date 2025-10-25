@@ -45,9 +45,9 @@ const reportsList: { id: ReportType; title: string; description: string, require
     { id: "sales-by-date", title: "Sales by Date", description: "Detailed list of sales transactions.", requiresDate: true },
     { id: "sales-by-service", title: "Sales by Service", description: "Breakdown of revenue by service type.", requiresDate: true },
     { id: "sales-by-staff", title: "Sales by Staff", description: "Summary of sales performance per staff member.", requiresDate: true },
-    { id: "profit-loss", title: "Profit and Loss", description: "Calculate profit after expenses.", requiresDate: true },
-    { id: "purchases-by-date", title: "Purchases by Date", description: "Detailed list of supply orders received.", requiresDate: true },
-    { id: "inventory-value", title: "Inventory Value", description: "Total value of current stock.", requiresDate: false },
+    { id: "profit-loss", title: "Profit and Loss", description: "Calculate profit after expenses from sales and received orders.", requiresDate: true },
+    { id: "purchases-by-date", title: "Purchases by Date", description: "Detailed list of supply orders received and their costs.", requiresDate: true },
+    { id: "inventory-value", title: "Inventory Value", description: "Total value of current stock based on purchase price.", requiresDate: false },
     { id: "inventory", title: "Inventory Report", description: "Current stock levels for all items.", requiresDate: false },
 ];
 
@@ -426,3 +426,6 @@ function InventoryValueTable({ inventory }: { inventory: InventoryItem[] | null 
         </Table>
     );
 }
+
+
+    
