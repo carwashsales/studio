@@ -16,6 +16,7 @@ import {
     TableHead,
     TableHeader,
     TableRow,
+    TableFooter,
   } from '@/components/ui/table';
 import { DonutChart } from "@tremor/react";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
@@ -35,14 +36,16 @@ type ReportType =
     | "sales-by-date"
     | "sales-by-service"
     | "sales-by-staff"
-    | "inventory"
-    | "profit-loss";
+    | "profit-loss"
+    | "purchases-by-date"
+    | "inventory";
 
 const reportsList: { id: ReportType; title: string; description: string, requiresDate: boolean }[] = [
     { id: "sales-by-date", title: "Sales by Date", description: "Detailed list of sales transactions.", requiresDate: true },
     { id: "sales-by-service", title: "Sales by Service", description: "Breakdown of revenue by service type.", requiresDate: true },
     { id: "sales-by-staff", title: "Sales by Staff", description: "Summary of sales performance per staff member.", requiresDate: true },
     { id: "profit-loss", title: "Profit and Loss", description: "Calculate profit after expenses.", requiresDate: true },
+    { id: "purchases-by-date", title: "Purchases by Date", description: "Detailed list of supply orders received.", requiresDate: true },
     { id: "inventory", title: "Inventory Report", description: "Current stock levels for all items.", requiresDate: false },
 ];
 
@@ -73,7 +76,7 @@ export default function ReportsPage() {
     return query(
         collection(firestore, "users", user.uid, "orders"),
         where("date", ">=", dateRange.from.toISOString()),
-        where("date", "<=", dateRange.to.toISOString())
+        where("date", "<=", date.to.toISOString())
     );
   }, [firestore, user, dateRange]);
 
@@ -133,6 +136,8 @@ export default function ReportsPage() {
             return <SalesByStaffChart sales={sales} />;
         case "profit-loss":
             return <ProfitLossReport sales={sales} orders={orders} />;
+        case "purchases-by-date":
+            return <PurchasesByDateTable orders={orders} />;
         case "inventory":
             return <InventoryTable inventory={inventoryItems} />;
         default:
@@ -312,6 +317,40 @@ function ProfitLossReport({ sales, orders }: { sales: CarWashSale[] | null, orde
             </Card>
             <SalesByDateTable sales={sales} />
         </div>
+    );
+}
+
+function PurchasesByDateTable({ orders }: { orders: Order[] | null }) {
+    const receivedOrders = React.useMemo(() => orders?.filter(o => o.status === 'Received') || [], [orders]);
+    if (receivedOrders.length === 0) return <p>No received orders for this period.</p>;
+
+    const totalCost = receivedOrders.reduce((acc, order) => acc + order.total, 0);
+
+    return (
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Date Received</TableHead>
+                    <TableHead>Supplier</TableHead>
+                    <TableHead className="text-right">Total Cost</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {receivedOrders.map(order => (
+                    <TableRow key={order.id}>
+                        <TableCell>{format(new Date(order.date), 'Pp')}</TableCell>
+                        <TableCell>{order.supplier}</TableCell>
+                        <TableCell className="text-right">{valueFormatter(order.total)}</TableCell>
+                    </TableRow>
+                ))}
+            </TableBody>
+            <TableFooter>
+                <TableRow>
+                    <TableCell colSpan={2} className="text-right font-bold">Total</TableCell>
+                    <TableCell className="text-right font-bold">{valueFormatter(totalCost)}</TableCell>
+                </TableRow>
+            </TableFooter>
+        </Table>
     );
 }
 
