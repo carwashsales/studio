@@ -68,16 +68,16 @@ export default function SidebarNav() {
             <SidebarFooter className="p-2">
                  <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip={{children: "Settings"}}>
-                            <Link href="#">
+                        <SidebarMenuButton asChild tooltip={{children: "Settings"}} isActive={pathname === '/settings'}>
+                            <Link href="/settings">
                                 <Settings />
                                 <span>Settings</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip={{children: "Support"}}>
-                            <Link href="#">
+                        <SidebarMenuButton asChild tooltip={{children: "Support"}} isActive={pathname === '/support'}>
+                            <Link href="/support">
                                 <HelpCircle />
                                 <span>Support</span>
                             </Link>
