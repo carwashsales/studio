@@ -31,14 +31,13 @@ import type { CarWashSale, InventoryItem } from '@/types';
 import { collection, query, orderBy, limit, where } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
-import { useSettings } from '@/context/settings-context';
 import { format } from 'date-fns';
+import { CurrencySymbol } from '@/components/currency-symbol';
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
-  const { currencySymbol } = useSettings();
 
   React.useEffect(() => {
     if (!isUserLoading && !user) {
@@ -132,9 +131,9 @@ export default function DashboardPage() {
             <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold flex items-center">
+            <div className="text-2xl font-bold flex items-center gap-1">
               {salesLoading ? '...' : totalRevenue.toFixed(2)}
-              <span className="ml-1 font-semibold">{currencySymbol}</span>
+              <CurrencySymbol />
             </div>
             <p className="text-xs text-muted-foreground">
               Total revenue from all sales
@@ -217,7 +216,7 @@ export default function DashboardPage() {
                                 by {sale.staffName} on {format(new Date(sale.date), "PPP")}
                             </div>
                         </TableCell>
-                        <TableCell className="text-right flex justify-end items-center">{sale.amount.toFixed(2)}<span className='ml-1 font-semibold'>{currencySymbol}</span></TableCell>
+                        <TableCell className="text-right flex justify-end items-center gap-1">{sale.amount.toFixed(2)}<CurrencySymbol /></TableCell>
                     </TableRow>
                 ))}
               </TableBody>

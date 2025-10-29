@@ -1,11 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 
-interface SettingsContextType {
-  currencySymbol: string;
-  setCurrencySymbol: (symbol: string) => void;
-}
+// The context is now empty as currency is handled by the CurrencySymbol component.
+// We can keep the provider structure in case we need to add other global settings later.
+interface SettingsContextType {}
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
@@ -22,38 +21,7 @@ interface SettingsProviderProps {
 }
 
 export function SettingsProvider({ children }: SettingsProviderProps) {
-  const [currencySymbol, setCurrencySymbolState] = useState<string>('SAR');
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    try {
-      const storedSymbol = localStorage.getItem('currencySymbol');
-      if (storedSymbol) {
-        setCurrencySymbolState(storedSymbol);
-      }
-    } catch (error) {
-      console.error("Could not access localStorage:", error);
-    }
-    setIsLoaded(true);
-  }, []);
-
-  const setCurrencySymbol = (symbol: string) => {
-    setCurrencySymbolState(symbol);
-    try {
-      localStorage.setItem('currencySymbol', symbol);
-    } catch (error) {
-       console.error("Could not access localStorage:", error);
-    }
-  };
-
-  const value = {
-    currencySymbol,
-    setCurrencySymbol,
-  };
-  
-  if (!isLoaded) {
-    return null; // Or a loading spinner
-  }
+  const value = {}; // No values needed for now
 
   return (
     <SettingsContext.Provider value={value}>

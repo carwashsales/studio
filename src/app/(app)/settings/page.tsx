@@ -12,7 +12,6 @@ import { useTheme } from "next-themes";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { useSettings } from "@/context/settings-context";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { collection, getDocs, writeBatch } from "firebase/firestore";
 import { useToast } from "@/components/ui/use-toast";
@@ -25,8 +24,6 @@ export default function SettingsPage() {
     const { toast } = useToast();
     const [isLoggingOut, setIsLoggingOut] = React.useState(false);
     const { theme, setTheme } = useTheme();
-    const { currencySymbol, setCurrencySymbol } = useSettings();
-    const [localCurrencySymbol, setLocalCurrencySymbol] = React.useState(currencySymbol);
     const [photoURL, setPhotoURL] = React.useState(user?.photoURL || '');
 
     React.useEffect(() => {
@@ -44,14 +41,6 @@ export default function SettingsPage() {
           await signOut(auth);
           router.push('/login');
         }
-    };
-    
-    const handleCurrencySave = () => {
-        setCurrencySymbol(localCurrencySymbol);
-        toast({
-            title: "Settings Saved",
-            description: "Your new currency symbol has been saved.",
-        })
     };
 
     const handleProfileUpdate = async () => {
@@ -185,29 +174,6 @@ export default function SettingsPage() {
                         />
                     </div>
                 </CardContent>
-            </Card>
-            
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline">Currency</CardTitle>
-                    <CardDescription>
-                        Set the currency symbol used throughout the application.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                     <div className="flex items-center gap-4">
-                        <Label htmlFor="currency-symbol">Symbol</Label>
-                        <Input 
-                            id="currency-symbol" 
-                            className="w-24" 
-                            value={localCurrencySymbol}
-                            onChange={(e) => setLocalCurrencySymbol(e.target.value)}
-                        />
-                     </div>
-                </CardContent>
-                 <CardFooter className="flex justify-end">
-                    <Button onClick={handleCurrencySave}>Save Currency</Button>
-                </CardFooter>
             </Card>
 
             <Card>

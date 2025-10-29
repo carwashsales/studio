@@ -30,7 +30,7 @@ import type { DateRange } from "react-day-picker";
 import { List, ListItem } from "@/components/ui/list";
 import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useSettings } from "@/context/settings-context";
+import { CurrencySymbol } from '@/components/currency-symbol';
 
 type ReportType = 
     | "sales-by-date"
@@ -60,8 +60,13 @@ export default function ReportsPage() {
     from: startOfDay(new Date(new Date().setDate(1))),
     to: endOfDay(new Date()),
   });
-  const { currencySymbol } = useSettings();
-  const valueFormatter = (number: number) => `${currencySymbol} ${new Intl.NumberFormat("us").format(number).toString()}`;
+  
+  const valueFormatter = (number: number) => {
+    const formattedNumber = new Intl.NumberFormat("us").format(number).toString();
+    // This is a bit of a hack to get the currency symbol to render as a component
+    // We'll replace this placeholder with the actual component later.
+    return `__SYMBOL__${formattedNumber}`;
+  };
 
 
   const salesQuery = useMemoFirebase(() => {
@@ -131,13 +136,13 @@ export default function ReportsPage() {
   const renderReportDetails = () => {
     switch (activeReport) {
         case "sales-by-date":
-            return <SalesByDateTable sales={sales} currencySymbol={currencySymbol} />;
+            return <SalesByDateTable sales={sales} />;
         case "sales-by-service":
             return <SalesByServiceChart sales={sales} valueFormatter={valueFormatter} />;
         case "sales-by-staff":
             return <SalesByStaffChart sales={sales} valueFormatter={valueFormatter} />;
         case "profit-loss":
-            return <ProfitLossReport sales={sales} orders={orders} valueFormatter={valueFormatter} currencySymbol={currencySymbol} />;
+            return <ProfitLossReport sales={sales} orders={orders} valueFormatter={valueFormatter} />;
         case "purchases-by-date":
             return <PurchasesByDateTable orders={orders} valueFormatter={valueFormatter} />;
         case "inventory":
@@ -176,9 +181,23 @@ export default function ReportsPage() {
   return activeReport ? renderReportContent() : renderReportList();
 }
 
+// Helper component to render formatted currency from the valueFormatter hack
+function FormattedCurrency({ value }: { value: string }) {
+    if (!value.startsWith('__SYMBOL__')) {
+        return <>{value}</>;
+    }
+    const number = value.replace('__SYMBOL__', '');
+    return (
+        <span className="flex items-center justify-end gap-1">
+            {number} <CurrencySymbol />
+        </span>
+    );
+}
+
+
 // -- Report Components --
 
-function SalesByDateTable({ sales, currencySymbol }: { sales: CarWashSale[] | null, currencySymbol: string }) {
+function SalesByDateTable({ sales }: { sales: CarWashSale[] | null }) {
     if (!sales || sales.length === 0) return <p>No sales data for this period.</p>;
     return (
         <Table>
@@ -198,7 +217,7 @@ function SalesByDateTable({ sales, currencySymbol }: { sales: CarWashSale[] | nu
                         <TableCell>{sale.service}</TableCell>
                         <TableCell>{sale.staffName}</TableCell>
                         <TableCell className="capitalize">{sale.paymentMethod?.replace('-',' ')}</TableCell>
-                        <TableCell className="text-right flex justify-end items-center">{sale.amount.toFixed(2)} <span className="ml-1 font-semibold">{currencySymbol}</span></TableCell>
+                        <TableCell className="text-right flex justify-end items-center gap-1">{sale.amount.toFixed(2)} <CurrencySymbol /></TableCell>
                     </TableRow>
                 ))}
             </TableBody>
@@ -227,16 +246,38 @@ function SalesByServiceChart({ sales, valueFormatter }: { sales: CarWashSale[] |
                 category="value"
                 index="name"
                 valueFormatter={valueFormatter}
-                label={`${valueFormatter(totalAmount)}`}
+                label={valueFormatter(totalAmount)}
                 colors={["blue-600", "sky-500", "cyan-400", "teal-500", "emerald-500", "lime-600"]}
                 className="h-[350px]"
+                customTooltip={({ payload, active }) => {
+                    if (!active || !payload) return null;
+                     const categoryPayload = payload?.[0];
+                    if (!categoryPayload) return null;
+                    return (
+                      <div className="w-56 rounded-tremor-default border border-tremor-border bg-tremor-background p-2 text-tremor-default shadow-tremor-dropdown">
+                        <div className="flex flex-1 space-x-2.5">
+                          <div className={`w-1.5 flex flex-col bg-${categoryPayload.color}-500 rounded`} />
+                          <div className="w-full">
+                            <div className="flex items-center justify-between space-x-8">
+                              <p className="whitespace-nowrap text-tremor-content">
+                                {categoryPayload.name}
+                              </p>
+                              <p className="whitespace-nowrap font-medium text-tremor-content-strong">
+                                <FormattedCurrency value={valueFormatter(categoryPayload.value as number)} />
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }}
             />
              <ul className="mt-4 space-y-2 text-sm text-muted-foreground w-full max-w-md">
                 {chartData.map(item => (
                     <li key={item.name} className="flex justify-between items-center">
                         <span>{item.name}</span>
-                        <span className="font-medium text-foreground">
-                            {((item.value / totalAmount) * 100).toFixed(1)}% ({valueFormatter(item.value)})
+                        <span className="font-medium text-foreground flex items-center gap-1">
+                            {((item.value / totalAmount) * 100).toFixed(1)}% (<FormattedCurrency value={valueFormatter(item.value)} />)
                         </span>
                     </li>
                 ))}
@@ -274,8 +315,8 @@ function SalesByStaffChart({ sales, valueFormatter }: { sales: CarWashSale[] | n
                 {chartData.map(item => (
                     <TableRow key={item.name}>
                         <TableCell className="font-medium">{item.name}</TableCell>
-                        <TableCell className="text-right">{valueFormatter(item.sales)}</TableCell>
-                        <TableCell className="text-right">{valueFormatter(item.commission)}</TableCell>
+                        <TableCell className="text-right"><FormattedCurrency value={valueFormatter(item.sales)} /></TableCell>
+                        <TableCell className="text-right"><FormattedCurrency value={valueFormatter(item.commission)} /></TableCell>
                     </TableRow>
                 ))}
             </TableBody>
@@ -283,7 +324,7 @@ function SalesByStaffChart({ sales, valueFormatter }: { sales: CarWashSale[] | n
     );
 }
 
-function ProfitLossReport({ sales, orders, valueFormatter, currencySymbol }: { sales: CarWashSale[] | null, orders: Order[] | null, valueFormatter: (n: number) => string, currencySymbol: string }) {
+function ProfitLossReport({ sales, orders, valueFormatter }: { sales: CarWashSale[] | null, orders: Order[] | null, valueFormatter: (n: number) => string }) {
     const reportData = React.useMemo(() => {
         const totalRevenue = sales?.reduce((acc, sale) => acc + sale.amount, 0) || 0;
         const totalCommission = sales?.reduce((acc, sale) => acc + sale.commission, 0) || 0;
@@ -300,23 +341,23 @@ function ProfitLossReport({ sales, orders, valueFormatter, currencySymbol }: { s
                 <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                     <div>
                         <p className="text-muted-foreground">Total Revenue</p>
-                        <p className="text-2xl font-bold">{valueFormatter(reportData.totalRevenue)}</p>
+                        <p className="text-2xl font-bold"><FormattedCurrency value={valueFormatter(reportData.totalRevenue)} /></p>
                     </div>
                     <div>
                         <p className="text-muted-foreground">Total Expenses</p>
-                        <p className="text-2xl font-bold text-destructive">{valueFormatter(reportData.totalExpenses)}</p>
+                        <p className="text-2xl font-bold text-destructive"><FormattedCurrency value={valueFormatter(reportData.totalExpenses)} /></p>
                     </div>
                      <div>
                         <p className="text-muted-foreground">Commissions Paid</p>
-                        <p className="text-lg font-bold">{valueFormatter(reportData.totalCommission)}</p>
+                        <p className="text-lg font-bold"><FormattedCurrency value={valueFormatter(reportData.totalCommission)} /></p>
                     </div>
                      <div>
                         <p className="text-muted-foreground">Net Profit</p>
-                        <p className="text-2xl font-bold text-green-600">{valueFormatter(reportData.netProfit)}</p>
+                        <p className="text-2xl font-bold text-green-600"><FormattedCurrency value={valueFormatter(reportData.netProfit)} /></p>
                     </div>
                 </CardContent>
             </Card>
-            <SalesByDateTable sales={sales} currencySymbol={currencySymbol} />
+            <SalesByDateTable sales={sales} />
         </div>
     );
 }
@@ -341,14 +382,14 @@ function PurchasesByDateTable({ orders, valueFormatter }: { orders: Order[] | nu
                     <TableRow key={order.id}>
                         <TableCell>{format(new Date(order.date), 'Pp')}</TableCell>
                         <TableCell>{order.supplier}</TableCell>
-                        <TableCell className="text-right">{valueFormatter(order.total)}</TableCell>
+                        <TableCell className="text-right"><FormattedCurrency value={valueFormatter(order.total)}/></TableCell>
                     </TableRow>
                 ))}
             </TableBody>
             <TableFooter>
                 <TableRow>
                     <TableCell colSpan={2} className="text-right font-bold">Total</TableCell>
-                    <TableCell className="text-right font-bold">{valueFormatter(totalCost)}</TableCell>
+                    <TableCell className="text-right font-bold"><FormattedCurrency value={valueFormatter(totalCost)} /></TableCell>
                 </TableRow>
             </TableFooter>
         </Table>

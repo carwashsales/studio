@@ -47,7 +47,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { useSettings } from '@/context/settings-context';
+import { CurrencySymbol } from '@/components/currency-symbol';
 
 type StatusFilter = "all" | Order['status'];
 
@@ -160,7 +160,6 @@ export default function OrdersPage() {
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
-  const { currencySymbol } = useSettings();
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('all');
   
   React.useEffect(() => {
@@ -278,8 +277,8 @@ export default function OrdersPage() {
                   {format(new Date(order.date), 'Pp')}
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end items-center">
-                    {order.total.toFixed(2)} <span className="ml-1 font-semibold">{currencySymbol}</span>
+                  <div className="flex justify-end items-center gap-1">
+                    {order.total.toFixed(2)} <CurrencySymbol />
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
@@ -312,8 +311,8 @@ export default function OrdersPage() {
             <TableRow>
               <TableCell colSpan={5} className="text-right font-bold">Total Cost of Received Orders</TableCell>
               <TableCell className="text-right font-bold">
-                <div className="flex justify-end items-center">
-                  {totalReceived.toFixed(2)} <span className="ml-1 font-semibold">{currencySymbol}</span>
+                <div className="flex justify-end items-center gap-1">
+                  {totalReceived.toFixed(2)} <CurrencySymbol />
                 </div>
               </TableCell>
             </TableRow>

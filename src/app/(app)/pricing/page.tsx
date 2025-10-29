@@ -28,13 +28,12 @@ import { useToast } from '@/components/ui/use-toast';
 import { Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { seedDefaultServices } from '@/lib/services';
-import { useSettings } from '@/context/settings-context';
+import { CurrencySymbol } from '@/components/currency-symbol';
 
 
 const EditableCell = ({ value, onSave, isEditable = true }: { value: number; onSave: (newValue: number) => void, isEditable?: boolean }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [currentValue, setCurrentValue] = React.useState(value);
-  const { currencySymbol } = useSettings();
 
   React.useEffect(() => {
     setCurrentValue(value);
@@ -61,8 +60,8 @@ const EditableCell = ({ value, onSave, isEditable = true }: { value: number; onS
   }
 
   return (
-    <div onClick={() => isEditable && setIsEditing(true)} className={cn("flex items-center justify-end", {"cursor-pointer": isEditable})}>
-      {value.toFixed(2)} <span className="ml-1 font-semibold">{currencySymbol}</span>
+    <div onClick={() => isEditable && setIsEditing(true)} className={cn("flex items-center justify-end gap-1", {"cursor-pointer": isEditable})}>
+      {value.toFixed(2)} <CurrencySymbol />
     </div>
   );
 };

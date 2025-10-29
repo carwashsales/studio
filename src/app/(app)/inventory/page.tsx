@@ -43,7 +43,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
-import { useSettings } from '@/context/settings-context';
+import { CurrencySymbol } from '@/components/currency-symbol';
 
 type StatusFilter = "all" | "in-stock" | "low-stock" | "out-of-stock";
 
@@ -157,7 +157,6 @@ export default function InventoryPage() {
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
-  const { currencySymbol } = useSettings();
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>("all");
 
   React.useEffect(() => {
@@ -269,13 +268,13 @@ export default function InventoryPage() {
                 <TableCell>{getStatusBadge(item.quantity)}</TableCell>
                 <TableCell className="text-right">{item.quantity}</TableCell>
                 <TableCell className="hidden md:table-cell text-right">
-                  <div className="flex justify-end items-center">
-                    {(item.purchasePrice || 0).toFixed(2)} <span className="ml-1 font-semibold">{currencySymbol}</span>
+                  <div className="flex justify-end items-center gap-1">
+                    {(item.purchasePrice || 0).toFixed(2)} <CurrencySymbol />
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
-                    <div className="flex justify-end items-center">
-                        {(item.quantity * (item.purchasePrice || 0)).toFixed(2)} <span className="ml-1 font-semibold">{currencySymbol}</span>
+                    <div className="flex justify-end items-center gap-1">
+                        {(item.quantity * (item.purchasePrice || 0)).toFixed(2)} <CurrencySymbol />
                     </div>
                 </TableCell>
                 <TableCell>

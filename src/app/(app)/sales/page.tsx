@@ -34,7 +34,7 @@ import type { CarWashSale, Staff, Price as ServicePrice } from '@/types';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
-import { useSettings } from '@/context/settings-context';
+import { CurrencySymbol } from '@/components/currency-symbol';
 
 type PaymentType = 'coupon' | 'cash' | 'machine' | 'not-paid';
 
@@ -43,7 +43,6 @@ export default function SalesPage() {
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
-  const { currencySymbol } = useSettings();
 
   // Form State
   const [serviceId, setServiceId] = React.useState('');
@@ -256,18 +255,24 @@ export default function SalesPage() {
               <div className="flex justify-between gap-4">
                 <div className="grid gap-2 w-1/2">
                   <Label htmlFor="price">Price</Label>
-                  <div className="relative"><Input id="price" value={paymentType === 'not-paid' ? '0.00' : price} readOnly className="pl-8" /><span className="absolute left-2 top-1/2 -translate-y-1/2 font-semibold">{currencySymbol}</span></div>
+                  <div className="relative flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm">
+                    <span className="font-mono">{paymentType === 'not-paid' ? '0.00' : price}</span>
+                    <span className="ml-auto"><CurrencySymbol /></span>
+                  </div>
                 </div>
                 <div className="grid gap-2 w-1/2">
-                  <Label htmlFor="commission">Commission</Label>
-                  <div className="relative"><Input id="commission" value={commission} readOnly className="pl-8" /><span className="absolute left-2 top-1/2 -translate-y-1/2 font-semibold">{currencySymbol}</span></div>
+                   <Label htmlFor="commission">Commission</Label>
+                   <div className="relative flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm">
+                    <span className="font-mono">{commission}</span>
+                    <span className="ml-auto"><CurrencySymbol /></span>
+                  </div>
                 </div>
               </div>
 
               {showWaxOption && waxService && (
                 <div className="flex items-center space-x-2 pt-2">
                   <Checkbox id="wax-add-on" checked={waxAddOn} onCheckedChange={(c) => setWaxAddOn(!!c)} disabled={noStaff} />
-                  <Label htmlFor="wax-add-on" className="cursor-pointer flex items-center">Wax Add-on (+{waxService.prices['default']?.price || 0} <span className="ml-1 font-semibold">{currencySymbol}</span>)</Label>
+                  <Label htmlFor="wax-add-on" className="cursor-pointer flex items-center gap-1">Wax Add-on (+{waxService.prices['default']?.price || 0} <CurrencySymbol />)</Label>
                 </div>
               )}
 
@@ -315,8 +320,8 @@ export default function SalesPage() {
                     <TableCell className="font-medium">{sale.service}</TableCell>
                     <TableCell className="hidden sm:table-cell">{sale.staffName}</TableCell>
                     <TableCell className="hidden md:table-cell">{format(new Date(sale.date), 'Pp')}</TableCell>
-                    <TableCell className="text-right flex justify-end items-center">
-                      {sale.amount.toFixed(2)} <span className="ml-1 font-semibold">{currencySymbol}</span>
+                    <TableCell className="text-right flex justify-end items-center gap-1">
+                      {sale.amount.toFixed(2)} <CurrencySymbol />
                     </TableCell>
                   </TableRow>
                 ))}
