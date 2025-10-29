@@ -3,7 +3,7 @@ import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-export default function RootPage() {
+export default function AppRootPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
 
