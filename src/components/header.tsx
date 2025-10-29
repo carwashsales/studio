@@ -26,17 +26,7 @@ export default function Header() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const router = useRouter();
-  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
-  const handleLogout = async () => {
-    if (auth) {
-      setIsLoggingOut(true);
-      await signOut(auth);
-      router.push('/login');
-      setIsLoggingOut(false);
-    }
-  };
-  
   const handleLogin = () => {
     router.push('/login');
   }
@@ -54,55 +44,36 @@ export default function Header() {
         <div className="flex-1">
           <h1 className="text-lg font-semibold md:text-xl font-headline">Dashboard</h1>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-              <Avatar className="h-9 w-9">
-                <AvatarImage src={user?.photoURL ?? undefined} alt="User Avatar" />
-                <AvatarFallback>{user?.email?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end">
-            {isUserLoading ? (
-               <DropdownMenuLabel>Loading...</DropdownMenuLabel>
-            ) : user ? (
-              <>
-              <DropdownMenuLabel>
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {user.email}
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem disabled>
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/settings')}>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
-              </DropdownMenuItem>
-              </>
-            ) : (
-              <>
+        {isUserLoading ? (
+            <Avatar className="h-9 w-9">
+                <AvatarFallback>?</AvatarFallback>
+            </Avatar>
+        ) : user ? (
+            <Link href="/settings">
+                <Avatar className="h-9 w-9 cursor-pointer">
+                    <AvatarImage src={user?.photoURL ?? undefined} alt="User Avatar" />
+                    <AvatarFallback>{user?.email?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                </Avatar>
+            </Link>
+        ) : (
+            <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                <Avatar className="h-9 w-9">
+                    <AvatarFallback>?</AvatarFallback>
+                </Avatar>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end">
                 <DropdownMenuItem onClick={handleLogin}>
-                  <span>Login</span>
+                    <span>Login</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleRegister}>
-                  <span>Register</span>
+                    <span>Register</span>
                 </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+            </DropdownMenu>
+        )}
       </div>
     </header>
   );
