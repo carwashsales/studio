@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -20,15 +21,15 @@ import {
     Car,
     Settings,
     HelpCircle,
-    Users
+    Users,
+    CircleDollarSign
 } from "lucide-react";
-import Image from "next/image";
 
 const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/inventory", label: "Inventory", icon: Package },
     { href: "/orders", label: "Orders", icon: ShoppingCart },
-    { href: "/sales", label: "Sales", icon: () => <Image src="/sarwhite1.png" alt="SAR" width={16} height={16} /> },
+    { href: "/sales", label: "Sales", icon: CircleDollarSign },
     { href: "/pricing", label: "Pricing", icon: Tag },
     { href: "/reports", label: "Reports", icon: FileText },
     { href: "/staff", label: "Staff", icon: Users },

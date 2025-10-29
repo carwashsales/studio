@@ -55,3 +55,4 @@ export type Activity = {
   status: 'Completed' | 'Low Stock' | 'Out of Stock' | 'Shipped' | 'Pending';
   date: string;
 };
+
