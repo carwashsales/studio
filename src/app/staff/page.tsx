@@ -31,8 +31,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import SidebarNav from "@/components/sidebar-nav";
+import Header from "@/components/header";
 
-export default function StaffPage() {
+function StaffPageContent() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
@@ -156,4 +159,18 @@ export default function StaffPage() {
       </div>
     </div>
   );
+}
+
+export default function StaffPage() {
+    return (
+        <SidebarProvider>
+            <SidebarNav />
+            <SidebarInset>
+                <Header />
+                <main className="p-4 sm:p-6 lg:p-8">
+                    <StaffPageContent />
+                </main>
+            </SidebarInset>
+        </SidebarProvider>
+    );
 }

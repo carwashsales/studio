@@ -27,10 +27,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import type { DateRange } from "react-day-picker";
-import Image from "next/image";
 import { List, ListItem } from "@/components/ui/list";
 import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useSettings } from "@/context/settings-context";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import SidebarNav from "@/components/sidebar-nav";
+import Header from "@/components/header";
 
 type ReportType = 
     | "sales-by-date"
@@ -49,9 +52,8 @@ const reportsList: { id: ReportType; title: string; description: string, require
     { id: "inventory", title: "Inventory Report", description: "Current stock levels for all items.", requiresDate: false },
 ];
 
-const valueFormatter = (number: number) => `SAR ${new Intl.NumberFormat("us").format(number).toString()}`;
 
-export default function ReportsPage() {
+function ReportsPageContent() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
@@ -61,6 +63,9 @@ export default function ReportsPage() {
     from: startOfDay(new Date(new Date().setDate(1))),
     to: endOfDay(new Date()),
   });
+  const { currencySymbol } = useSettings();
+  const valueFormatter = (number: number) => `${currencySymbol} ${new Intl.NumberFormat("us").format(number).toString()}`;
+
 
   const salesQuery = useMemoFirebase(() => {
     if (!firestore || !user || !dateRange?.from || !dateRange?.to) return null;
@@ -129,15 +134,15 @@ export default function ReportsPage() {
   const renderReportDetails = () => {
     switch (activeReport) {
         case "sales-by-date":
-            return <SalesByDateTable sales={sales} />;
+            return <SalesByDateTable sales={sales} currencySymbol={currencySymbol} />;
         case "sales-by-service":
-            return <SalesByServiceChart sales={sales} />;
+            return <SalesByServiceChart sales={sales} valueFormatter={valueFormatter} />;
         case "sales-by-staff":
-            return <SalesByStaffChart sales={sales} />;
+            return <SalesByStaffChart sales={sales} valueFormatter={valueFormatter} />;
         case "profit-loss":
-            return <ProfitLossReport sales={sales} orders={orders} />;
+            return <ProfitLossReport sales={sales} orders={orders} valueFormatter={valueFormatter} currencySymbol={currencySymbol} />;
         case "purchases-by-date":
-            return <PurchasesByDateTable orders={orders} />;
+            return <PurchasesByDateTable orders={orders} valueFormatter={valueFormatter} />;
         case "inventory":
             return <InventoryTable inventory={inventoryItems} />;
         default:
@@ -174,9 +179,23 @@ export default function ReportsPage() {
   return activeReport ? renderReportContent() : renderReportList();
 }
 
+export default function ReportsPage() {
+    return (
+        <SidebarProvider>
+            <SidebarNav />
+            <SidebarInset>
+                <Header />
+                <main className="p-4 sm:p-6 lg:p-8">
+                    <ReportsPageContent />
+                </main>
+            </SidebarInset>
+        </SidebarProvider>
+    );
+}
+
 // -- Report Components --
 
-function SalesByDateTable({ sales }: { sales: CarWashSale[] | null }) {
+function SalesByDateTable({ sales, currencySymbol }: { sales: CarWashSale[] | null, currencySymbol: string }) {
     if (!sales || sales.length === 0) return <p>No sales data for this period.</p>;
     return (
         <Table>
@@ -196,7 +215,7 @@ function SalesByDateTable({ sales }: { sales: CarWashSale[] | null }) {
                         <TableCell>{sale.service}</TableCell>
                         <TableCell>{sale.staffName}</TableCell>
                         <TableCell className="capitalize">{sale.paymentMethod?.replace('-',' ')}</TableCell>
-                        <TableCell className="text-right flex justify-end items-center">{sale.amount.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" /></TableCell>
+                        <TableCell className="text-right flex justify-end items-center">{sale.amount.toFixed(2)} <span className="ml-1 font-semibold">{currencySymbol}</span></TableCell>
                     </TableRow>
                 ))}
             </TableBody>
@@ -204,7 +223,7 @@ function SalesByDateTable({ sales }: { sales: CarWashSale[] | null }) {
     );
 }
 
-function SalesByServiceChart({ sales }: { sales: CarWashSale[] | null }) {
+function SalesByServiceChart({ sales, valueFormatter }: { sales: CarWashSale[] | null, valueFormatter: (n: number) => string }) {
     const chartData = React.useMemo(() => {
         if (!sales) return [];
         const serviceSales: { [key: string]: number } = {};
@@ -216,7 +235,6 @@ function SalesByServiceChart({ sales }: { sales: CarWashSale[] | null }) {
 
     if (chartData.length === 0) return <p>No sales data for this period.</p>;
     
-    const customValueFormatter = (number: number) => `SAR ${new Intl.NumberFormat('us').format(number).toString()}`;
     const totalAmount = chartData.reduce((acc, item) => acc + item.value, 0);
 
     return (
@@ -225,8 +243,8 @@ function SalesByServiceChart({ sales }: { sales: CarWashSale[] | null }) {
                 data={chartData}
                 category="value"
                 index="name"
-                valueFormatter={customValueFormatter}
-                label={`${customValueFormatter(totalAmount)}`}
+                valueFormatter={valueFormatter}
+                label={`${valueFormatter(totalAmount)}`}
                 colors={["blue-600", "sky-500", "cyan-400", "teal-500", "emerald-500", "lime-600"]}
                 className="h-[350px]"
             />
@@ -235,7 +253,7 @@ function SalesByServiceChart({ sales }: { sales: CarWashSale[] | null }) {
                     <li key={item.name} className="flex justify-between items-center">
                         <span>{item.name}</span>
                         <span className="font-medium text-foreground">
-                            {((item.value / totalAmount) * 100).toFixed(1)}% ({customValueFormatter(item.value)})
+                            {((item.value / totalAmount) * 100).toFixed(1)}% ({valueFormatter(item.value)})
                         </span>
                     </li>
                 ))}
@@ -244,7 +262,7 @@ function SalesByServiceChart({ sales }: { sales: CarWashSale[] | null }) {
     );
 }
 
-function SalesByStaffChart({ sales }: { sales: CarWashSale[] | null }) {
+function SalesByStaffChart({ sales, valueFormatter }: { sales: CarWashSale[] | null, valueFormatter: (n: number) => string }) {
     const chartData = React.useMemo(() => {
         if (!sales) return [];
         const staffSales: { [key: string]: { sales: number; commission: number } } = {};
@@ -282,7 +300,7 @@ function SalesByStaffChart({ sales }: { sales: CarWashSale[] | null }) {
     );
 }
 
-function ProfitLossReport({ sales, orders }: { sales: CarWashSale[] | null, orders: Order[] | null }) {
+function ProfitLossReport({ sales, orders, valueFormatter, currencySymbol }: { sales: CarWashSale[] | null, orders: Order[] | null, valueFormatter: (n: number) => string, currencySymbol: string }) {
     const reportData = React.useMemo(() => {
         const totalRevenue = sales?.reduce((acc, sale) => acc + sale.amount, 0) || 0;
         const totalCommission = sales?.reduce((acc, sale) => acc + sale.commission, 0) || 0;
@@ -315,12 +333,12 @@ function ProfitLossReport({ sales, orders }: { sales: CarWashSale[] | null, orde
                     </div>
                 </CardContent>
             </Card>
-            <SalesByDateTable sales={sales} />
+            <SalesByDateTable sales={sales} currencySymbol={currencySymbol} />
         </div>
     );
 }
 
-function PurchasesByDateTable({ orders }: { orders: Order[] | null }) {
+function PurchasesByDateTable({ orders, valueFormatter }: { orders: Order[] | null, valueFormatter: (n: number) => string }) {
     const receivedOrders = React.useMemo(() => orders?.filter(o => o.status === 'Received') || [], [orders]);
     if (receivedOrders.length === 0) return <p>No received orders for this period.</p>;
 
@@ -387,5 +405,3 @@ function InventoryTable({ inventory }: { inventory: InventoryItem[] | null }) {
         </Table>
     );
 }
-
-    

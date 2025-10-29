@@ -33,16 +33,20 @@ import { collection, orderBy, query } from 'firebase/firestore';
 import type { CarWashSale, Staff, Price as ServicePrice } from '@/types';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { useToast } from '@/components/ui/use-toast';
+import { useSettings } from '@/context/settings-context';
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import SidebarNav from "@/components/sidebar-nav";
+import Header from "@/components/header";
 
 type PaymentType = 'coupon' | 'cash' | 'machine' | 'not-paid';
 
-export default function SalesPage() {
+function SalesPageContent() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { currencySymbol } = useSettings();
 
   // Form State
   const [serviceId, setServiceId] = React.useState('');
@@ -65,8 +69,10 @@ export default function SalesPage() {
 
   const noStaff = !staff || staff.length === 0;
   const serviceConfig = services?.find(s => s.id === serviceId);
-  const showWaxOption = serviceId.includes('wash');
-
+  
+  const waxService = services?.find(s => s.id === 'wax-add-on');
+  const showWaxOption = serviceId && serviceId.toLowerCase().includes('wash') && waxService;
+  
   const resetForm = React.useCallback(() => {
     setServiceId('');
     setCarSize('');
@@ -108,7 +114,7 @@ export default function SalesPage() {
       }
 
       if (waxAddOn && showWaxOption) {
-        const waxPriceInfo = services?.find(s => s.id === 'wax-add-on')?.prices['default'];
+        const waxPriceInfo = waxService?.prices['default'];
         if(waxPriceInfo) {
             currentPrice += waxPriceInfo.price;
             currentCommission += waxPriceInfo.commission;
@@ -121,7 +127,7 @@ export default function SalesPage() {
       setPrice('');
       setCommission('');
     }
-   }, [serviceId, carSize, paymentType, serviceConfig, waxAddOn, showWaxOption, services]);
+   }, [serviceId, carSize, paymentType, serviceConfig, waxAddOn, showWaxOption, services, waxService]);
 
   const validateForm = () => {
     const newErrors: { [key: string]: boolean } = {};
@@ -253,18 +259,18 @@ export default function SalesPage() {
               <div className="flex justify-between gap-4">
                 <div className="grid gap-2 w-1/2">
                   <Label htmlFor="price">Price</Label>
-                  <div className="relative"><Input id="price" value={paymentType === 'not-paid' ? '0.00' : price} readOnly className="pl-8" /><Image src="/sar.png" alt="SAR" width={16} height={16} className="absolute left-2 top-1/2 -translate-y-1/2" /></div>
+                  <div className="relative"><Input id="price" value={paymentType === 'not-paid' ? '0.00' : price} readOnly className="pl-8" /><span className="absolute left-2 top-1/2 -translate-y-1/2 font-semibold">{currencySymbol}</span></div>
                 </div>
                 <div className="grid gap-2 w-1/2">
                   <Label htmlFor="commission">Commission</Label>
-                  <div className="relative"><Input id="commission" value={commission} readOnly className="pl-8" /><Image src="/sar.png" alt="SAR" width={16} height={16} className="absolute left-2 top-1/2 -translate-y-1/2" /></div>
+                  <div className="relative"><Input id="commission" value={commission} readOnly className="pl-8" /><span className="absolute left-2 top-1/2 -translate-y-1/2 font-semibold">{currencySymbol}</span></div>
                 </div>
               </div>
 
-              {showWaxOption && (
+              {showWaxOption && waxService && (
                 <div className="flex items-center space-x-2 pt-2">
                   <Checkbox id="wax-add-on" checked={waxAddOn} onCheckedChange={(c) => setWaxAddOn(!!c)} disabled={noStaff} />
-                  <Label htmlFor="wax-add-on" className="cursor-pointer flex items-center">Wax Add-on (+{services?.find(s => s.id === 'wax-add-on')?.prices['default']?.price || 0} <Image src="/sar.png" alt="SAR" width={12} height={12} className="mx-1" />)</Label>
+                  <Label htmlFor="wax-add-on" className="cursor-pointer flex items-center">Wax Add-on (+{waxService.prices['default']?.price || 0} <span className="ml-1 font-semibold">{currencySymbol}</span>)</Label>
                 </div>
               )}
 
@@ -313,7 +319,7 @@ export default function SalesPage() {
                     <TableCell className="hidden sm:table-cell">{sale.staffName}</TableCell>
                     <TableCell className="hidden md:table-cell">{format(new Date(sale.date), 'Pp')}</TableCell>
                     <TableCell className="text-right flex justify-end items-center">
-                      {sale.amount.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
+                      {sale.amount.toFixed(2)} <span className="ml-1 font-semibold">{currencySymbol}</span>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -324,4 +330,18 @@ export default function SalesPage() {
       </div>
     </div>
   );
+}
+
+export default function SalesPage() {
+    return (
+        <SidebarProvider>
+            <SidebarNav />
+            <SidebarInset>
+                <Header />
+                <main className="p-4 sm:p-6 lg:p-8">
+                    <SalesPageContent />
+                </main>
+            </SidebarInset>
+        </SidebarProvider>
+    );
 }

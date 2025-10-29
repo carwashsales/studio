@@ -43,7 +43,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
-import Image from 'next/image';
+import { useSettings } from '@/context/settings-context';
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import SidebarNav from "@/components/sidebar-nav";
+import Header from "@/components/header";
 
 type StatusFilter = "all" | "in-stock" | "low-stock" | "out-of-stock";
 
@@ -152,11 +155,12 @@ function ItemDialog({ mode, item, children }: { mode: 'add' | 'edit', item?: Inv
   );
 }
 
-export default function InventoryPage() {
+function InventoryPageContent() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { currencySymbol } = useSettings();
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>("all");
 
   React.useEffect(() => {
@@ -269,12 +273,12 @@ export default function InventoryPage() {
                 <TableCell className="text-right">{item.quantity}</TableCell>
                 <TableCell className="hidden md:table-cell text-right">
                   <div className="flex justify-end items-center">
-                    {(item.purchasePrice || 0).toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
+                    {(item.purchasePrice || 0).toFixed(2)} <span className="ml-1 font-semibold">{currencySymbol}</span>
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
                     <div className="flex justify-end items-center">
-                        {(item.quantity * (item.purchasePrice || 0)).toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
+                        {(item.quantity * (item.purchasePrice || 0)).toFixed(2)} <span className="ml-1 font-semibold">{currencySymbol}</span>
                     </div>
                 </TableCell>
                 <TableCell>
@@ -301,4 +305,18 @@ export default function InventoryPage() {
       </CardContent>
     </Card>
   );
+}
+
+export default function InventoryPage() {
+    return (
+        <SidebarProvider>
+            <SidebarNav />
+            <SidebarInset>
+                <Header />
+                <main className="p-4 sm:p-6 lg:p-8">
+                    <InventoryPageContent />
+                </main>
+            </SidebarInset>
+        </SidebarProvider>
+    );
 }

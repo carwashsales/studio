@@ -7,8 +7,11 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Mail, MessageSquare } from 'lucide-react';
 import Link from "next/link";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import SidebarNav from "@/components/sidebar-nav";
+import Header from "@/components/header";
 
-export default function SupportPage() {
+function SupportPageContent() {
     const { user, isUserLoading } = useUser();
     const router = useRouter();
 
@@ -68,4 +71,18 @@ export default function SupportPage() {
             </CardContent>
         </Card>
     )
+}
+
+export default function SupportPage() {
+    return (
+        <SidebarProvider>
+            <SidebarNav />
+            <SidebarInset>
+                <Header />
+                <main className="p-4 sm:p-6 lg:p-8">
+                    <SupportPageContent />
+                </main>
+            </SidebarInset>
+        </SidebarProvider>
+    );
 }

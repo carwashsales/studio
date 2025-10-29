@@ -23,17 +23,21 @@ import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
 import type { Price as ServicePrice } from '@/types';
 import { collection, doc, orderBy, query } from 'firebase/firestore';
-import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { seedDefaultServices } from '@/lib/services';
+import { useSettings } from '@/context/settings-context';
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import SidebarNav from "@/components/sidebar-nav";
+import Header from "@/components/header";
 
 
 const EditableCell = ({ value, onSave, isEditable = true }: { value: number; onSave: (newValue: number) => void, isEditable?: boolean }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [currentValue, setCurrentValue] = React.useState(value);
+  const { currencySymbol } = useSettings();
 
   React.useEffect(() => {
     setCurrentValue(value);
@@ -61,13 +65,13 @@ const EditableCell = ({ value, onSave, isEditable = true }: { value: number; onS
 
   return (
     <div onClick={() => isEditable && setIsEditing(true)} className={cn("flex items-center justify-end", {"cursor-pointer": isEditable})}>
-      {value.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
+      {value.toFixed(2)} <span className="ml-1 font-semibold">{currencySymbol}</span>
     </div>
   );
 };
 
 
-export default function PricingPage() {
+function PricingPageContent() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
@@ -188,4 +192,19 @@ export default function PricingPage() {
       </CardContent>
     </Card>
   );
+}
+
+
+export default function PricingPage() {
+    return (
+        <SidebarProvider>
+            <SidebarNav />
+            <SidebarInset>
+                <Header />
+                <main className="p-4 sm:p-6 lg:p-8">
+                    <PricingPageContent />
+                </main>
+            </SidebarInset>
+        </SidebarProvider>
+    );
 }

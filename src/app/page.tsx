@@ -27,19 +27,22 @@ import type { InventoryItem, CarWashSale, Order } from '@/types';
 import { format, subMonths, getMonth, getYear, subDays, startOfDay } from 'date-fns';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { useToast } from '@/components/ui/use-toast';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { useSettings } from '@/context/settings-context';
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import SidebarNav from "@/components/sidebar-nav";
+import Header from "@/components/header";
 
 async function seedSampleData(firestore: any, userId: string) {
   const collections = {
     inventory: [
-      { name: 'Car Shampoo', category: 'Soaps', quantity: 50 },
-      { name: 'Tire Shine', category: 'Chemicals', quantity: 8 },
-      { name: 'Microfiber Towels', category: 'Tools', quantity: 150 },
-      { name: 'Wax Polish', category: 'Chemicals', quantity: 20 },
-      { name: 'Wheel Cleaner', category: 'Chemicals', quantity: 0 },
+      { name: 'Car Shampoo', category: 'Soaps', quantity: 50, purchasePrice: 10 },
+      { name: 'Tire Shine', category: 'Chemicals', quantity: 8, purchasePrice: 15 },
+      { name: 'Microfiber Towels', category: 'Tools', quantity: 150, purchasePrice: 2 },
+      { name: 'Wax Polish', category: 'Chemicals', quantity: 20, purchasePrice: 25 },
+      { name: 'Wheel Cleaner', category: 'Chemicals', quantity: 0, purchasePrice: 20 },
     ],
     orders: [
         { supplier: 'ChemCo', date: new Date(2023, 10, 15).toISOString(), status: 'Received', total: 450.00 },
@@ -80,12 +83,13 @@ async function seedSampleData(firestore: any, userId: string) {
 }
 
 
-export default function Dashboard() {
+function DashboardContent() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [salesView, setSalesView] = useState<'daily' | 'monthly'>('daily');
+  const { currencySymbol } = useSettings();
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -267,7 +271,7 @@ export default function Dashboard() {
                 categories={['Sales']}
                 colors={['blue']}
                 valueFormatter={(number: number) =>
-                    `SAR ${new Intl.NumberFormat('us').format(number).toString()}`
+                    `${currencySymbol} ${new Intl.NumberFormat('us').format(number).toString()}`
                 }
                 yAxisWidth={60}
                 className="h-[250px] w-full"
@@ -301,7 +305,7 @@ export default function Dashboard() {
                       {format(new Date(activity.date), 'Pp')}
                     </TableCell>
                     <TableCell className="text-right flex justify-end items-center">
-                      {activity.amount.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
+                      {activity.amount.toFixed(2)} <span className="ml-1 font-semibold">{currencySymbol}</span>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -312,4 +316,18 @@ export default function Dashboard() {
       </div>
     </div>
   );
+}
+
+export default function Dashboard() {
+    return (
+        <SidebarProvider>
+            <SidebarNav />
+            <SidebarInset>
+                <Header />
+                <main className="p-4 sm:p-6 lg:p-8">
+                    <DashboardContent />
+                </main>
+            </SidebarInset>
+        </SidebarProvider>
+    );
 }

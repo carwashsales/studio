@@ -34,7 +34,6 @@ import { collection, doc, updateDoc } from 'firebase/firestore';
 import type { Order } from '@/types';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -48,6 +47,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
+import { useSettings } from '@/context/settings-context';
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import SidebarNav from "@/components/sidebar-nav";
+import Header from "@/components/header";
 
 type StatusFilter = "all" | Order['status'];
 
@@ -155,11 +158,12 @@ function OrderDialog({ mode, order, children }: { mode: 'add' | 'edit', order?: 
   );
 }
 
-export default function OrdersPage() {
+function OrdersPageContent() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { currencySymbol } = useSettings();
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('all');
   
   React.useEffect(() => {
@@ -278,7 +282,7 @@ export default function OrdersPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end items-center">
-                    {order.total.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
+                    {order.total.toFixed(2)} <span className="ml-1 font-semibold">{currencySymbol}</span>
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
@@ -312,7 +316,7 @@ export default function OrdersPage() {
               <TableCell colSpan={5} className="text-right font-bold">Total Cost of Received Orders</TableCell>
               <TableCell className="text-right font-bold">
                 <div className="flex justify-end items-center">
-                  {totalReceived.toFixed(2)} <Image src="/sar.png" alt="SAR" width={16} height={16} className="ml-1" />
+                  {totalReceived.toFixed(2)} <span className="ml-1 font-semibold">{currencySymbol}</span>
                 </div>
               </TableCell>
             </TableRow>
@@ -321,4 +325,18 @@ export default function OrdersPage() {
       </CardContent>
     </Card>
   );
+}
+
+export default function OrdersPage() {
+    return (
+        <SidebarProvider>
+            <SidebarNav />
+            <SidebarInset>
+                <Header />
+                <main className="p-4 sm:p-6 lg:p-8">
+                    <OrdersPageContent />
+                </main>
+            </SidebarInset>
+        </SidebarProvider>
+    );
 }
