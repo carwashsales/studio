@@ -32,7 +32,7 @@ export default function LoginPage() {
     initiateEmailSignIn(auth, email, password);
   };
 
-  if (isUserLoading || user) {
+  if (isUserLoading) {
       return <div>Loading...</div>
   }
 
