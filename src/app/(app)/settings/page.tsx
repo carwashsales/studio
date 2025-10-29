@@ -4,8 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth, useUser, useFirestore } from "@/firebase";
-import { signOut } from "firebase/auth";
-import { LogOut, Moon, Sun, Trash2, AlertTriangle } from "lucide-react";
+import { signOut, updateProfile } from "firebase/auth";
+import { LogOut, Moon, Sun, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useTheme } from "next-themes";
@@ -27,10 +27,14 @@ export default function SettingsPage() {
     const { theme, setTheme } = useTheme();
     const { currencySymbol, setCurrencySymbol } = useSettings();
     const [localCurrencySymbol, setLocalCurrencySymbol] = React.useState(currencySymbol);
+    const [photoURL, setPhotoURL] = React.useState(user?.photoURL || '');
 
     React.useEffect(() => {
         if (!isUserLoading && !user) {
             router.push('/login');
+        }
+        if (user?.photoURL) {
+            setPhotoURL(user.photoURL);
         }
     }, [user, isUserLoading, router]);
 
@@ -48,6 +52,27 @@ export default function SettingsPage() {
             title: "Settings Saved",
             description: "Your new currency symbol has been saved.",
         })
+    };
+
+    const handleProfileUpdate = async () => {
+        if (auth?.currentUser) {
+            try {
+                await updateProfile(auth.currentUser, { photoURL: photoURL });
+                toast({
+                    title: "Profile Updated",
+                    description: "Your profile picture has been updated successfully.",
+                });
+                // Force a re-render or state update if needed, though onAuthStateChanged should handle it
+                router.refresh(); 
+            } catch (error) {
+                console.error("Error updating profile:", error);
+                toast({
+                    variant: 'destructive',
+                    title: "Update Failed",
+                    description: "Could not update your profile picture.",
+                });
+            }
+        }
     };
 
     const handleClearData = async () => {
@@ -116,6 +141,27 @@ export default function SettingsPage() {
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
                     </Button>
+                </CardFooter>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline">Profile Picture</CardTitle>
+                    <CardDescription>Update your profile picture by providing an image URL.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex flex-col gap-4">
+                        <Label htmlFor="photo-url">Image URL</Label>
+                        <Input
+                            id="photo-url"
+                            placeholder="https://example.com/image.png"
+                            value={photoURL}
+                            onChange={(e) => setPhotoURL(e.target.value)}
+                        />
+                    </div>
+                </CardContent>
+                <CardFooter className="flex justify-end">
+                    <Button onClick={handleProfileUpdate}>Save Profile Picture</Button>
                 </CardFooter>
             </Card>
 
