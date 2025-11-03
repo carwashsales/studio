@@ -62,10 +62,7 @@ export default function ReportsPage() {
   });
   
   const valueFormatter = (number: number) => {
-    const formattedNumber = new Intl.NumberFormat("us").format(number).toString();
-    // This is a bit of a hack to get the currency symbol to render as a component
-    // We'll replace this placeholder with the actual component later.
-    return `__SYMBOL__${formattedNumber}`;
+    return new Intl.NumberFormat("us").format(number).toString();
   };
 
 
@@ -181,19 +178,6 @@ export default function ReportsPage() {
   return activeReport ? renderReportContent() : renderReportList();
 }
 
-// Helper component to render formatted currency from the valueFormatter hack
-function FormattedCurrency({ value }: { value: string }) {
-    if (!value.startsWith('__SYMBOL__')) {
-        return <>{value}</>;
-    }
-    const number = value.replace('__SYMBOL__', '');
-    return (
-        <span className="flex items-center justify-end gap-1">
-            {number} <CurrencySymbol />
-        </span>
-    );
-}
-
 
 // -- Report Components --
 
@@ -238,6 +222,19 @@ function SalesByServiceChart({ sales, valueFormatter }: { sales: CarWashSale[] |
     if (chartData.length === 0) return <p>No sales data for this period.</p>;
     
     const totalAmount = chartData.reduce((acc, item) => acc + item.value, 0);
+    
+    const renderCustomLabel = () => {
+        return (
+            <div className="flex flex-col items-center justify-center">
+                <span className="font-bold text-2xl flex items-center">
+                    {valueFormatter(totalAmount)}
+                    <CurrencySymbol />
+                </span>
+                <span className="text-muted-foreground text-sm">Total Sales</span>
+            </div>
+        )
+    };
+
 
     return (
         <div className="flex flex-col items-center">
@@ -246,7 +243,8 @@ function SalesByServiceChart({ sales, valueFormatter }: { sales: CarWashSale[] |
                 category="value"
                 index="name"
                 valueFormatter={valueFormatter}
-                label={valueFormatter(totalAmount)}
+                label={renderCustomLabel()}
+                showLabel={true}
                 colors={["blue-600", "sky-500", "cyan-400", "teal-500", "emerald-500", "lime-600"]}
                 className="h-[350px]"
                 customTooltip={({ payload, active }) => {
@@ -262,8 +260,9 @@ function SalesByServiceChart({ sales, valueFormatter }: { sales: CarWashSale[] |
                               <p className="whitespace-nowrap text-tremor-content">
                                 {categoryPayload.name}
                               </p>
-                              <p className="whitespace-nowrap font-medium text-tremor-content-strong">
-                                <FormattedCurrency value={valueFormatter(categoryPayload.value as number)} />
+                              <p className="whitespace-nowrap font-medium text-tremor-content-strong flex items-center gap-1">
+                                {valueFormatter(categoryPayload.value as number)}
+                                <CurrencySymbol />
                               </p>
                             </div>
                           </div>
@@ -277,7 +276,8 @@ function SalesByServiceChart({ sales, valueFormatter }: { sales: CarWashSale[] |
                     <li key={item.name} className="flex justify-between items-center">
                         <span>{item.name}</span>
                         <span className="font-medium text-foreground flex items-center gap-1">
-                            {((item.value / totalAmount) * 100).toFixed(1)}% (<FormattedCurrency value={valueFormatter(item.value)} />)
+                            {((item.value / totalAmount) * 100).toFixed(1)}% 
+                            ({valueFormatter(item.value)} <CurrencySymbol />)
                         </span>
                     </li>
                 ))}
@@ -315,8 +315,8 @@ function SalesByStaffChart({ sales, valueFormatter }: { sales: CarWashSale[] | n
                 {chartData.map(item => (
                     <TableRow key={item.name}>
                         <TableCell className="font-medium">{item.name}</TableCell>
-                        <TableCell className="text-right"><FormattedCurrency value={valueFormatter(item.sales)} /></TableCell>
-                        <TableCell className="text-right"><FormattedCurrency value={valueFormatter(item.commission)} /></TableCell>
+                        <TableCell className="text-right flex justify-end items-center gap-1">{valueFormatter(item.sales)}<CurrencySymbol /></TableCell>
+                        <TableCell className="text-right flex justify-end items-center gap-1">{valueFormatter(item.commission)}<CurrencySymbol /></TableCell>
                     </TableRow>
                 ))}
             </TableBody>
@@ -341,19 +341,19 @@ function ProfitLossReport({ sales, orders, valueFormatter }: { sales: CarWashSal
                 <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                     <div>
                         <p className="text-muted-foreground">Total Revenue</p>
-                        <p className="text-2xl font-bold"><FormattedCurrency value={valueFormatter(reportData.totalRevenue)} /></p>
+                        <p className="text-2xl font-bold flex items-center justify-center gap-1">{valueFormatter(reportData.totalRevenue)}<CurrencySymbol /></p>
                     </div>
                     <div>
                         <p className="text-muted-foreground">Total Expenses</p>
-                        <p className="text-2xl font-bold text-destructive"><FormattedCurrency value={valueFormatter(reportData.totalExpenses)} /></p>
+                        <p className="text-2xl font-bold text-destructive flex items-center justify-center gap-1">{valueFormatter(reportData.totalExpenses)}<CurrencySymbol /></p>
                     </div>
                      <div>
                         <p className="text-muted-foreground">Commissions Paid</p>
-                        <p className="text-lg font-bold"><FormattedCurrency value={valueFormatter(reportData.totalCommission)} /></p>
+                        <p className="text-lg font-bold flex items-center justify-center gap-1">{valueFormatter(reportData.totalCommission)}<CurrencySymbol /></p>
                     </div>
                      <div>
                         <p className="text-muted-foreground">Net Profit</p>
-                        <p className="text-2xl font-bold text-green-600"><FormattedCurrency value={valueFormatter(reportData.netProfit)} /></p>
+                        <p className="text-2xl font-bold text-green-600 flex items-center justify-center gap-1">{valueFormatter(reportData.netProfit)}<CurrencySymbol /></p>
                     </div>
                 </CardContent>
             </Card>
@@ -382,14 +382,14 @@ function PurchasesByDateTable({ orders, valueFormatter }: { orders: Order[] | nu
                     <TableRow key={order.id}>
                         <TableCell>{format(new Date(order.date), 'Pp')}</TableCell>
                         <TableCell>{order.supplier}</TableCell>
-                        <TableCell className="text-right"><FormattedCurrency value={valueFormatter(order.total)}/></TableCell>
+                        <TableCell className="text-right flex justify-end items-center gap-1">{valueFormatter(order.total)}<CurrencySymbol /></TableCell>
                     </TableRow>
                 ))}
             </TableBody>
             <TableFooter>
                 <TableRow>
                     <TableCell colSpan={2} className="text-right font-bold">Total</TableCell>
-                    <TableCell className="text-right font-bold"><FormattedCurrency value={valueFormatter(totalCost)} /></TableCell>
+                    <TableCell className="text-right font-bold flex justify-end items-center gap-1">{valueFormatter(totalCost)}<CurrencySymbol /></TableCell>
                 </TableRow>
             </TableFooter>
         </Table>
