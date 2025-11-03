@@ -157,7 +157,7 @@ export default function SalesPage() {
     const newSale: Omit<CarWashSale, 'id'> = {
       service: serviceConfig?.name || 'Unknown Service',
       staffName: selectedStaff.name,
-      carSize: carSize || undefined,
+      ...(carSize && { carSize }),
       date: new Date().toISOString(),
       amount: isPaid ? Number(price) : 0,
       commission: Number(commission),
