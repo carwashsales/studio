@@ -5,11 +5,17 @@ import * as React from "react";
 import { getMessages } from 'next-intl/server';
 import { NextIntlClientProvider } from "next-intl";
 
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({ 
+    children,
+    params: { locale }
+ }: { 
+    children: React.ReactNode,
+    params: { locale: string } 
+}) {
     const messages = await getMessages();
     
     return (
-        <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider locale={locale} messages={messages}>
             <SidebarProvider>
                 <SidebarNav />
                 <SidebarInset>
