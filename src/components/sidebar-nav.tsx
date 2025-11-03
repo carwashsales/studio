@@ -24,19 +24,21 @@ import {
     Users,
     CircleDollarSign
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 const navItems = [
-    { href: "/", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/inventory", label: "Inventory", icon: Package },
-    { href: "/orders", label: "Orders", icon: ShoppingCart },
-    { href: "/sales", label: "Sales", icon: CircleDollarSign },
-    { href: "/pricing", label: "Pricing", icon: Tag },
-    { href: "/reports", label: "Reports", icon: FileText },
-    { href: "/staff", label: "Staff", icon: Users },
+    { href: "/", labelKey: "dashboard", icon: LayoutDashboard },
+    { href: "/inventory", labelKey: "inventory", icon: Package },
+    { href: "/orders", labelKey: "orders", icon: ShoppingCart },
+    { href: "/sales", labelKey: "sales", icon: CircleDollarSign },
+    { href: "/pricing", labelKey: "pricing", icon: Tag },
+    { href: "/reports", labelKey: "reports", icon: FileText },
+    { href: "/staff", labelKey: "staff", icon: Users },
 ];
 
 export default function SidebarNav() {
     const pathname = usePathname();
+    const t = useTranslations('Sidebar');
 
     return (
         <Sidebar collapsible="icon" variant="sidebar" side="left" className="dark:bg-background dark:border-r">
@@ -53,13 +55,13 @@ export default function SidebarNav() {
                         <SidebarMenuItem key={item.href}>
                             <SidebarMenuButton
                                 asChild
-                                isActive={pathname === item.href}
-                                tooltip={{children: item.label}}
+                                isActive={pathname.endsWith(item.href)}
+                                tooltip={{children: t(item.labelKey as any)}}
                                 className="dark:data-[active=true]:bg-sidebar-accent"
                             >
                                 <Link href={item.href}>
                                     <item.icon />
-                                    <span>{item.label}</span>
+                                    <span>{t(item.labelKey as any)}</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -69,18 +71,18 @@ export default function SidebarNav() {
             <SidebarFooter className="p-2">
                  <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip={{children: "Settings"}} isActive={pathname === '/settings'}>
+                        <SidebarMenuButton asChild tooltip={{children: t('settings')}} isActive={pathname.includes('/settings')}>
                             <Link href="/settings">
                                 <Settings />
-                                <span>Settings</span>
+                                <span>{t('settings')}</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip={{children: "Support"}} isActive={pathname === '/support'}>
+                        <SidebarMenuButton asChild tooltip={{children: t('support')}} isActive={pathname.includes('/support')}>
                             <Link href="/support">
                                 <HelpCircle />
-                                <span>Support</span>
+                                <span>{t('support')}</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>

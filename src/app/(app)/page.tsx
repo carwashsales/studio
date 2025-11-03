@@ -1,7 +1,6 @@
 
 'use client';
 import {
-  Activity,
   ArrowUpRight,
   CircleDollarSign,
   Package,
@@ -33,11 +32,13 @@ import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { format } from 'date-fns';
 import { CurrencySymbol } from '@/components/currency-symbol';
+import { useTranslations } from 'next-intl';
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
+  const t = useTranslations('DashboardPage');
 
   React.useEffect(() => {
     if (!isUserLoading && !user) {
@@ -127,7 +128,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('totalRevenue')}</CardTitle>
             <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -136,13 +137,13 @@ export default function DashboardPage() {
               <CurrencySymbol />
             </div>
             <p className="text-xs text-muted-foreground">
-              Total revenue from all sales
+              {t('totalRevenueDescription')}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('totalSales')}</CardTitle>
             <Car className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -150,33 +151,33 @@ export default function DashboardPage() {
               {salesLoading ? '...' : `+${totalSales}`}
             </div>
             <p className="text-xs text-muted-foreground">
-              Total number of cars washed
+              {t('totalSalesDescription')}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Inventory Items
+              {t('totalInventory')}
             </CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{inventoryLoading ? '...' : totalInventory}</div>
             <p className="text-xs text-muted-foreground">
-              Total items in stock
+              {t('totalInventoryDescription')}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('lowStockAlerts')}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{lowStockLoading ? '...' : lowStockItems?.length || 0}</div>
             <p className="text-xs text-muted-foreground">
-              Items that need reordering
+              {t('lowStockAlertsDescription')}
             </p>
           </CardContent>
         </Card>
@@ -186,14 +187,14 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center">
             <div className="grid gap-2">
-              <CardTitle>Recent Sales</CardTitle>
+              <CardTitle>{t('recentSalesTitle')}</CardTitle>
               <CardDescription>
-                Your five most recent transactions.
+                {t('recentSalesDescription')}
               </CardDescription>
             </div>
             <Button asChild size="sm" className="ml-auto gap-1">
               <Link href="/sales">
-                View All
+                {t('viewAll')}
                 <ArrowUpRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -202,8 +203,8 @@ export default function DashboardPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Service</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead>{t('recentSalesService')}</TableHead>
+                  <TableHead className="text-right">{t('recentSalesAmount')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -226,14 +227,14 @@ export default function DashboardPage() {
         <Card>
             <CardHeader className="flex flex-row items-center">
                 <div className="grid gap-2">
-                <CardTitle>Low Stock Items</CardTitle>
+                <CardTitle>{t('lowStockItemsTitle')}</CardTitle>
                 <CardDescription>
-                    These items are running low and may need to be reordered soon.
+                    {t('lowStockItemsDescription')}
                 </CardDescription>
                 </div>
                  <Button asChild size="sm" className="ml-auto gap-1">
                     <Link href="/inventory">
-                        View All
+                        {t('viewAll')}
                         <ArrowUpRight className="h-4 w-4" />
                     </Link>
                 </Button>
@@ -242,9 +243,9 @@ export default function DashboardPage() {
                  <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Item</TableHead>
-                             <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Quantity</TableHead>
+                            <TableHead>{t('lowStockItem')}</TableHead>
+                             <TableHead>{t('lowStockStatus')}</TableHead>
+                            <TableHead className="text-right">{t('lowStockQuantity')}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>

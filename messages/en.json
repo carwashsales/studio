@@ -1,0 +1,34 @@
+{
+  "Sidebar": {
+    "dashboard": "Dashboard",
+    "inventory": "Inventory",
+    "orders": "Orders",
+    "sales": "Sales",
+    "pricing": "Pricing",
+    "reports": "Reports",
+    "staff": "Staff",
+    "settings": "Settings",
+    "support": "Support"
+  },
+  "DashboardPage": {
+    "title": "Dashboard",
+    "totalRevenue": "Total Revenue",
+    "totalRevenueDescription": "Total revenue from all sales",
+    "totalSales": "Total Sales",
+    "totalSalesDescription": "Total number of cars washed",
+    "totalInventory": "Total Inventory Items",
+    "totalInventoryDescription": "Total items in stock",
+    "lowStockAlerts": "Low Stock Alerts",
+    "lowStockAlertsDescription": "Items that need reordering",
+    "recentSalesTitle": "Recent Sales",
+    "recentSalesDescription": "Your five most recent transactions.",
+    "viewAll": "View All",
+    "recentSalesService": "Service",
+    "recentSalesAmount": "Amount",
+    "lowStockItemsTitle": "Low Stock Items",
+    "lowStockItemsDescription": "These items are running low and may need to be reordered soon.",
+    "lowStockItem": "Item",
+    "lowStockStatus": "Status",
+    "lowStockQuantity": "Quantity"
+  }
+}
