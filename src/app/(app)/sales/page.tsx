@@ -211,7 +211,7 @@ export default function SalesPage() {
               <div className="grid gap-2">
                 <Label htmlFor="service-type">Service Type</Label>
                 <Select value={serviceId} onValueChange={(v) => { setServiceId(v); setErrors(p => ({...p, serviceId: false}))}} disabled={noStaff}>
-                  <SelectTrigger id="service-type" data-invalid={errors.serviceId ? 'true' : undefined}>
+                  <SelectTrigger id="service-type" data-invalid={errors.serviceId ? 'true' : undefined} className="data-[invalid=true]:border-destructive">
                     <SelectValue placeholder="Select a service" />
                   </SelectTrigger>
                   <SelectContent>
@@ -226,7 +226,7 @@ export default function SalesPage() {
                 <div className="grid gap-2">
                   <Label htmlFor="car-size">Car Size</Label>
                   <Select value={carSize} onValueChange={(v) => { setCarSize(v); setErrors(p => ({...p, carSize: false}))}} disabled={noStaff || !serviceConfig?.needsSize}>
-                    <SelectTrigger id="car-size" data-invalid={errors.carSize ? 'true' : undefined}><SelectValue placeholder="Select car size" /></SelectTrigger>
+                    <SelectTrigger id="car-size" data-invalid={errors.carSize ? 'true' : undefined} className="data-[invalid=true]:border-destructive"><SelectValue placeholder="Select car size" /></SelectTrigger>
                     <SelectContent>
                       {carSizes.sort((a,b) => (serviceConfig?.prices[a]?.price || 0) - (serviceConfig?.prices[b]?.price || 0)).map(size => (
                         <SelectItem key={size} value={size} className="capitalize">{size.replace('-', ' ')}</SelectItem>
@@ -239,7 +239,7 @@ export default function SalesPage() {
               <div className="grid gap-2">
                 <Label htmlFor="staff-member">Staff Member</Label>
                 <Select value={staffId} onValueChange={(v) => { setStaffId(v); setErrors(p => ({...p, staffId: false}))}} disabled={noStaff}>
-                  <SelectTrigger id="staff-member" data-invalid={errors.staffId ? 'true' : undefined}>
+                  <SelectTrigger id="staff-member" data-invalid={errors.staffId ? 'true' : undefined} className="data-[invalid=true]:border-destructive">
                     <SelectValue placeholder={staffLoading ? "Loading..." : "Select staff"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -278,7 +278,7 @@ export default function SalesPage() {
                         setPaymentType(value);
                         setErrors(prev => ({...prev, paymentType: false}));
                     }}
-                    className="grid gap-3 pt-2 border-t"
+                    className="grid gap-3 pt-2 border-t data-[invalid=true]:rounded-md data-[invalid=true]:border data-[invalid=true]:border-destructive data-[invalid=true]:p-2"
                     data-invalid={errors.paymentType ? 'true' : undefined}
                 >
                     <Label className="font-semibold">Payment Method</Label>
@@ -349,5 +349,3 @@ export default function SalesPage() {
     </div>
   );
 }
-
-    
