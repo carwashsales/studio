@@ -35,6 +35,7 @@ import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
 import { CurrencySymbol } from '@/components/currency-symbol';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 type PaymentType = 'coupon' | 'cash' | 'machine' | 'not-paid';
 
@@ -134,11 +135,6 @@ export default function SalesPage() {
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-
- const handlePaymentTypeChange = (method: PaymentType) => {
-    setPaymentType(prev => (prev === method ? undefined : method));
-    setErrors(prev => ({...prev, paymentType: false}));
   };
 
   const handleAddSale = (e: React.FormEvent) => {
@@ -276,17 +272,37 @@ export default function SalesPage() {
                 </div>
               )}
 
-              <div className="grid gap-3 pt-2 border-t" data-invalid={errors.paymentType ? 'true' : undefined}>
-                <Label className="font-semibold">Payment Method</Label>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                  {serviceConfig?.hasCoupon && (
-                    <div className="flex items-center gap-2"><Checkbox id="payment-coupon" checked={paymentType === 'coupon'} onCheckedChange={() => handlePaymentTypeChange('coupon')} disabled={noStaff || paymentType === 'not-paid'} /><Label htmlFor="payment-coupon" className="cursor-pointer">Coupon</Label></div>
-                  )}
-                  <div className="flex items-center gap-2"><Checkbox id="payment-cash" checked={paymentType === 'cash'} onCheckedChange={() => handlePaymentTypeChange('cash')} disabled={noStaff || paymentType === 'not-paid'} /><Label htmlFor="payment-cash" className="cursor-pointer">Cash</Label></div>
-                  <div className="flex items-center gap-2"><Checkbox id="payment-machine" checked={paymentType === 'machine'} onCheckedChange={() => handlePaymentTypeChange('machine')} disabled={noStaff || paymentType === 'not-paid'} /><Label htmlFor="payment-machine" className="cursor-pointer">Machine</Label></div>
-                  <div className="flex items-center gap-2"><Checkbox id="payment-not-paid" checked={paymentType === 'not-paid'} onCheckedChange={() => handlePaymentTypeChange('not-paid')} disabled={noStaff} /><Label htmlFor="payment-not-paid" className="cursor-pointer">Not Paid</Label></div>
-                </div>
-              </div>
+                <RadioGroup
+                    value={paymentType}
+                    onValueChange={(value: PaymentType) => {
+                        setPaymentType(value);
+                        setErrors(prev => ({...prev, paymentType: false}));
+                    }}
+                    className="grid gap-3 pt-2 border-t"
+                    data-invalid={errors.paymentType ? 'true' : undefined}
+                >
+                    <Label className="font-semibold">Payment Method</Label>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                        {serviceConfig?.hasCoupon && (
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="coupon" id="payment-coupon" disabled={noStaff} />
+                                <Label htmlFor="payment-coupon">Coupon</Label>
+                            </div>
+                        )}
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="cash" id="payment-cash" disabled={noStaff} />
+                            <Label htmlFor="payment-cash">Cash</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="machine" id="payment-machine" disabled={noStaff} />
+                            <Label htmlFor="payment-machine">Machine</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="not-paid" id="payment-not-paid" disabled={noStaff} />
+                            <Label htmlFor="payment-not-paid">Not Paid</Label>
+                        </div>
+                    </div>
+                </RadioGroup>
               
               <div className="flex justify-end gap-2 pt-4">
                   <Button type="button" variant="outline" onClick={resetForm} disabled={noStaff}>Clear</Button>
@@ -333,3 +349,5 @@ export default function SalesPage() {
     </div>
   );
 }
+
+    
