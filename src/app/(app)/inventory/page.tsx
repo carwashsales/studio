@@ -88,17 +88,19 @@ function ItemDialog({ mode, item, children }: { mode: 'add' | 'edit', item?: Inv
   const [open, setOpen] = React.useState(false);
   
   React.useEffect(() => {
-    if (open && item) {
-      setName(item.name);
-      setCategory(item.category ?? '');
-      setQuantity(item.quantity);
-      setPurchasePrice(item.purchasePrice || 0);
-    } else if (open && mode === 'add') {
-      // Reset form on open for add mode
-      setName('');
-      setCategory('');
-      setQuantity(0);
-      setPurchasePrice(0);
+    if (open) {
+        if (mode === 'edit' && item) {
+            setName(item.name);
+            setCategory(item.category ?? '');
+            setQuantity(item.quantity);
+            setPurchasePrice(item.purchasePrice || 0);
+        } else if (mode === 'add') {
+            // Reset form on open for add mode
+            setName('');
+            setCategory('');
+            setQuantity(0);
+            setPurchasePrice(0);
+        }
     }
   }, [open, item, mode]);
 
