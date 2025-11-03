@@ -1,7 +1,7 @@
 
 'use client';
 
-import Link from "next/link";
+import { Link, usePathname, useRouter } from "next-intl";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,9 +21,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
-import { useRouter, usePathname } from 'next/navigation';
 import * as React from 'react';
-import { useLocale } from "use-intl";
+import { useLocale } from "next-intl";
 
 function LanguageSwitcher() {
     const router = useRouter();
@@ -31,9 +30,7 @@ function LanguageSwitcher() {
     const locale = useLocale();
 
     const switchLocale = (newLocale: string) => {
-        // The pathname is expected to start with the current locale, e.g., /en/dashboard
-        const newPath = `/${newLocale}${pathname.substring(3)}`;
-        router.replace(newPath);
+        router.replace(pathname, { locale: newLocale });
     };
 
     return (

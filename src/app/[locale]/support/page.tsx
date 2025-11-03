@@ -7,7 +7,7 @@ import { useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Mail, MessageSquare } from 'lucide-react';
-import Link from "next/link";
+import { Link } from "next-intl";
 
 export default function SupportPage() {
     const { user, isUserLoading } = useUser();
@@ -44,18 +44,18 @@ export default function SupportPage() {
                 <p>If you need help or have any questions, please feel free to reach out to us through one of the methods below. We're here to help!</p>
                 
                 <div className="flex flex-col sm:flex-row gap-4">
-                    <Link href={mailtoLink} className="w-full">
+                    <a href={mailtoLink} className="w-full">
                         <Button variant="outline" className="w-full h-16 text-lg">
                             <Mail className="mr-3 h-6 w-6" />
                             Email Support
                         </Button>
-                    </Link>
-                    <Link href={whatsappLink} target="_blank" rel="noopener noreferrer" className="w-full">
+                    </a>
+                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="w-full">
                         <Button variant="outline" className="w-full h-16 text-lg">
                             <MessageSquare className="mr-3 h-6 w-6" />
                             Chat on WhatsApp
                         </Button>
-                    </Link>
+                    </a>
                 </div>
 
                 <div className="pt-4 text-sm text-muted-foreground">

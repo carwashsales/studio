@@ -1,8 +1,7 @@
 
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, Link } from "next-intl";
 import {
     Sidebar,
     SidebarHeader,
@@ -55,7 +54,7 @@ export default function SidebarNav() {
                         <SidebarMenuItem key={item.href}>
                             <SidebarMenuButton
                                 asChild
-                                isActive={pathname.endsWith(item.href)}
+                                isActive={pathname === item.href}
                                 tooltip={{children: t(item.labelKey as any)}}
                                 className="dark:data-[active=true]:bg-sidebar-accent"
                             >
