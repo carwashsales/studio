@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -54,11 +55,19 @@ export default function RegisterPage() {
         // The onAuthStateChanged listener will handle the redirect
     } catch (error: any) {
         console.error("Error signing up:", error);
-        toast({
-            variant: "destructive",
-            title: "Sign-up failed",
-            description: error.message || "An unexpected error occurred.",
-        });
+        if (error.code === 'auth/email-already-in-use') {
+            toast({
+                variant: "destructive",
+                title: "Sign-up failed",
+                description: "This email is already in use. Please try logging in.",
+            });
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Sign-up failed",
+                description: error.message || "An unexpected error occurred.",
+            });
+        }
     }
   };
   
