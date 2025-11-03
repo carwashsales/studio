@@ -1,7 +1,7 @@
 
 "use client";
 
-import { usePathname, Link } from "next-intl";
+import { usePathname, Link } from "next-intl/client";
 import {
     Sidebar,
     SidebarHeader,

@@ -23,12 +23,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Link } from 'next-intl';
+import { Link, useRouter } from 'next-intl/client';
 import { Button } from '@/components/ui/button';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import type { CarWashSale, InventoryItem } from '@/types';
 import { collection, query, orderBy, limit, where } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { format } from 'date-fns';
 import { CurrencySymbol } from '@/components/currency-symbol';

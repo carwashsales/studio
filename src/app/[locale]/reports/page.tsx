@@ -230,7 +230,7 @@ function SalesByServiceChart({ sales }: { sales: CarWashSale[] | null }) {
             <div className="flex flex-col items-center justify-center">
                 <span className="font-bold text-2xl flex items-center gap-1">
                     {valueFormatter(totalAmount)}
-                    <CurrencySymbol />
+                    SAR
                 </span>
                 <span className="text-muted-foreground text-sm">Total Sales</span>
             </div>
@@ -264,7 +264,7 @@ function SalesByServiceChart({ sales }: { sales: CarWashSale[] | null }) {
                               </p>
                               <p className="whitespace-nowrap font-medium text-tremor-content-strong flex items-center gap-1">
                                 {valueFormatter(categoryPayload.value as number)}
-                                <CurrencySymbol />
+                                SAR
                               </p>
                             </div>
                           </div>
@@ -279,7 +279,7 @@ function SalesByServiceChart({ sales }: { sales: CarWashSale[] | null }) {
                         <span>{item.name}</span>
                         <span className="font-medium text-foreground flex items-center gap-1">
                             {((item.value / totalAmount) * 100).toFixed(1)}% 
-                            ({valueFormatter(item.value)} <CurrencySymbol />)
+                            ({valueFormatter(item.value)} SAR)
                         </span>
                     </li>
                 ))}

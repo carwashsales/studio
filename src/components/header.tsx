@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Link, usePathname, useRouter } from "next-intl";
+import { Link, usePathname, useRouter } from "next-intl/client";
 import {
   DropdownMenu,
   DropdownMenuContent,

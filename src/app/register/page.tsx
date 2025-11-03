@@ -11,10 +11,9 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Link } from 'next-intl';
+import { Link, useRouter } from 'next-intl/client';
 import { useState, useEffect } from 'react';
 import { useAuth, useUser, useFirestore } from '@/firebase';
-import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { seedDefaultServices } from '@/lib/services';
 import { useToast } from '@/components/ui/use-toast';
