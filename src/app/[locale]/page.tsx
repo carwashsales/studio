@@ -23,7 +23,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Link, useRouter } from 'next-intl';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import type { CarWashSale, InventoryItem } from '@/types';
@@ -36,8 +37,8 @@ import { useTranslations } from 'next-intl';
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
-  const firestore = useFirestore();
   const t = useTranslations('DashboardPage');
+  const firestore = useFirestore();
 
   React.useEffect(() => {
     if (!isUserLoading && !user) {

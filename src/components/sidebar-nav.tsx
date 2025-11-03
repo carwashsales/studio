@@ -1,7 +1,8 @@
 
 "use client";
 
-import { usePathname, Link } from 'next-intl';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import {
     Sidebar,
     SidebarHeader,

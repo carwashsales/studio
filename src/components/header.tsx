@@ -1,7 +1,8 @@
 
 'use client';
 
-import { Link, usePathname, useRouter } from 'next-intl';
+import { usePathname, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,7 +31,12 @@ function LanguageSwitcher() {
     const locale = useLocale();
 
     const switchLocale = (newLocale: string) => {
-        router.replace(pathname, { locale: newLocale });
+        // This will replace the current path with the new locale.
+        // The middleware will handle the correct redirection.
+        const newPath = pathname.startsWith(`/${locale}`) 
+            ? pathname.replace(`/${locale}`, `/${newLocale}`) 
+            : `/${newLocale}${pathname}`;
+        router.replace(newPath);
     };
 
     return (
