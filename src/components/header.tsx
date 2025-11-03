@@ -81,7 +81,7 @@ export default function Header() {
         </div>
       <div className="flex w-full items-center gap-4 md:gap-8">
         <div className="flex-1">
-          <h1 className="text-lg font-semibold md:text-xl font-headline">Dashboard</h1>
+          {/* This title could be dynamic based on the page */}
         </div>
         
         <LanguageSwitcher />

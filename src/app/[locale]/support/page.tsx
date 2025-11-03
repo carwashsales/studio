@@ -7,7 +7,6 @@ import { useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Mail, MessageSquare } from 'lucide-react';
-import { Link } from "next-intl";
 
 export default function SupportPage() {
     const { user, isUserLoading } = useUser();
