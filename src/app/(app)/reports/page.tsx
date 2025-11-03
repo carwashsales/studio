@@ -135,13 +135,13 @@ export default function ReportsPage() {
         case "sales-by-date":
             return <SalesByDateTable sales={sales} />;
         case "sales-by-service":
-            return <SalesByServiceChart sales={sales} valueFormatter={valueFormatter} />;
+            return <SalesByServiceChart sales={sales} />;
         case "sales-by-staff":
-            return <SalesByStaffChart sales={sales} valueFormatter={valueFormatter} />;
+            return <SalesByStaffChart sales={sales} />;
         case "profit-loss":
-            return <ProfitLossReport sales={sales} orders={orders} valueFormatter={valueFormatter} />;
+            return <ProfitLossReport sales={sales} orders={orders} />;
         case "purchases-by-date":
-            return <PurchasesByDateTable orders={orders} valueFormatter={valueFormatter} />;
+            return <PurchasesByDateTable orders={orders} />;
         case "inventory":
             return <InventoryTable inventory={inventoryItems} />;
         default:
@@ -209,7 +209,7 @@ function SalesByDateTable({ sales }: { sales: CarWashSale[] | null }) {
     );
 }
 
-function SalesByServiceChart({ sales, valueFormatter }: { sales: CarWashSale[] | null, valueFormatter: (n: number) => string }) {
+function SalesByServiceChart({ sales }: { sales: CarWashSale[] | null }) {
     const chartData = React.useMemo(() => {
         if (!sales) return [];
         const serviceSales: { [key: string]: number } = {};
@@ -222,11 +222,13 @@ function SalesByServiceChart({ sales, valueFormatter }: { sales: CarWashSale[] |
     if (chartData.length === 0) return <p>No sales data for this period.</p>;
     
     const totalAmount = chartData.reduce((acc, item) => acc + item.value, 0);
+
+    const valueFormatter = (number: number) => `${new Intl.NumberFormat("us").format(number).toString()}`;
     
     const renderCustomLabel = () => {
         return (
             <div className="flex flex-col items-center justify-center">
-                <span className="font-bold text-2xl flex items-center">
+                <span className="font-bold text-2xl flex items-center gap-1">
                     {valueFormatter(totalAmount)}
                     <CurrencySymbol />
                 </span>
@@ -245,7 +247,7 @@ function SalesByServiceChart({ sales, valueFormatter }: { sales: CarWashSale[] |
                 valueFormatter={valueFormatter}
                 label={renderCustomLabel()}
                 showLabel={true}
-                colors={["blue-600", "sky-500", "cyan-400", "teal-500", "emerald-500", "lime-600"]}
+                colors={["cyan", "sky", "blue", "indigo", "violet", "purple", "fuchsia", "pink", "rose", "red", "orange", "amber", "yellow", "lime", "green", "emerald", "teal"]}
                 className="h-[350px]"
                 customTooltip={({ payload, active }) => {
                     if (!active || !payload) return null;
@@ -254,7 +256,7 @@ function SalesByServiceChart({ sales, valueFormatter }: { sales: CarWashSale[] |
                     return (
                       <div className="w-56 rounded-tremor-default border border-tremor-border bg-tremor-background p-2 text-tremor-default shadow-tremor-dropdown">
                         <div className="flex flex-1 space-x-2.5">
-                          <div className={`w-1.5 flex flex-col bg-${categoryPayload.color}-500 rounded`} />
+                          <div style={{ backgroundColor: categoryPayload.color }} className="w-1.5 flex flex-col rounded" />
                           <div className="w-full">
                             <div className="flex items-center justify-between space-x-8">
                               <p className="whitespace-nowrap text-tremor-content">
@@ -286,7 +288,7 @@ function SalesByServiceChart({ sales, valueFormatter }: { sales: CarWashSale[] |
     );
 }
 
-function SalesByStaffChart({ sales, valueFormatter }: { sales: CarWashSale[] | null, valueFormatter: (n: number) => string }) {
+function SalesByStaffChart({ sales }: { sales: CarWashSale[] | null }) {
     const chartData = React.useMemo(() => {
         if (!sales) return [];
         const staffSales: { [key: string]: { sales: number; commission: number } } = {};
@@ -301,6 +303,9 @@ function SalesByStaffChart({ sales, valueFormatter }: { sales: CarWashSale[] | n
     }, [sales]);
 
     if (chartData.length === 0) return <p>No sales data for this period.</p>;
+    
+    const valueFormatter = (number: number) => `${new Intl.NumberFormat("us").format(number).toString()}`;
+
 
     return (
         <Table>
@@ -324,7 +329,7 @@ function SalesByStaffChart({ sales, valueFormatter }: { sales: CarWashSale[] | n
     );
 }
 
-function ProfitLossReport({ sales, orders, valueFormatter }: { sales: CarWashSale[] | null, orders: Order[] | null, valueFormatter: (n: number) => string }) {
+function ProfitLossReport({ sales, orders }: { sales: CarWashSale[] | null, orders: Order[] | null }) {
     const reportData = React.useMemo(() => {
         const totalRevenue = sales?.reduce((acc, sale) => acc + sale.amount, 0) || 0;
         const totalCommission = sales?.reduce((acc, sale) => acc + sale.commission, 0) || 0;
@@ -333,6 +338,9 @@ function ProfitLossReport({ sales, orders, valueFormatter }: { sales: CarWashSal
         const netProfit = totalRevenue - totalExpenses;
         return { totalRevenue, totalCommission, totalOrderCost, totalExpenses, netProfit };
     }, [sales, orders]);
+
+    const valueFormatter = (number: number) => `${new Intl.NumberFormat("us").format(number).toString()}`;
+
 
     return (
         <div className="space-y-4">
@@ -362,11 +370,12 @@ function ProfitLossReport({ sales, orders, valueFormatter }: { sales: CarWashSal
     );
 }
 
-function PurchasesByDateTable({ orders, valueFormatter }: { orders: Order[] | null, valueFormatter: (n: number) => string }) {
+function PurchasesByDateTable({ orders }: { orders: Order[] | null }) {
     const receivedOrders = React.useMemo(() => orders?.filter(o => o.status === 'Received') || [], [orders]);
     if (receivedOrders.length === 0) return <p>No received orders for this period.</p>;
 
     const totalCost = receivedOrders.reduce((acc, order) => acc + order.total, 0);
+    const valueFormatter = (number: number) => `${new Intl.NumberFormat("us").format(number).toString()}`;
 
     return (
         <Table>
