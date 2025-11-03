@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from "next/link";
@@ -13,14 +14,55 @@ import {
   User,
   LogOut,
   Settings,
+  Languages,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import * as React from 'react';
+import { useLocale } from "use-intl";
+
+function LanguageSwitcher() {
+    const router = useRouter();
+    const pathname = usePathname();
+    const locale = useLocale();
+
+    const switchLocale = (newLocale: string) => {
+        // The pathname is expected to start with the current locale, e.g., /en/dashboard
+        const newPath = `/${newLocale}${pathname.substring(3)}`;
+        router.replace(newPath);
+    };
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                    <Languages className="h-[1.2rem] w-[1.2rem]" />
+                    <span className="sr-only">Switch language</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Language</DropdownMenuLabel>
+                <DropdownMenuItem 
+                    onClick={() => switchLocale('en')} 
+                    disabled={locale === 'en'}
+                >
+                    English
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                    onClick={() => switchLocale('ar')} 
+                    disabled={locale === 'ar'}
+                >
+                    العربية (Arabic)
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
 
 export default function Header() {
   const { user, isUserLoading } = useUser();
@@ -44,6 +86,9 @@ export default function Header() {
         <div className="flex-1">
           <h1 className="text-lg font-semibold md:text-xl font-headline">Dashboard</h1>
         </div>
+        
+        <LanguageSwitcher />
+
         {isUserLoading ? (
             <Avatar className="h-9 w-9">
                 <AvatarFallback>?</AvatarFallback>

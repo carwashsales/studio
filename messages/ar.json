@@ -1,0 +1,35 @@
+
+{
+  "Sidebar": {
+    "dashboard": "لوحة القيادة",
+    "inventory": "المخزون",
+    "orders": "الطلبات",
+    "sales": "المبيعات",
+    "pricing": "التسعير",
+    "reports": "التقارير",
+    "staff": "الموظفين",
+    "settings": "الإعدادات",
+    "support": "الدعم"
+  },
+  "DashboardPage": {
+    "title": "لوحة القيادة",
+    "totalRevenue": "إجمالي الإيرادات",
+    "totalRevenueDescription": "إجمالي الإيرادات من جميع المبيعات",
+    "totalSales": "إجمالي المبيعات",
+    "totalSalesDescription": "إجمالي عدد السيارات التي تم غسلها",
+    "totalInventory": "إجمالي عناصر المخزون",
+    "totalInventoryDescription": "إجمالي العناصر الموجودة في المخزون",
+    "lowStockAlerts": "تنبيهات انخفاض المخزون",
+    "lowStockAlertsDescription": "العناصر التي تحتاج إلى إعادة طلب",
+    "recentSalesTitle": "المبيعات الأخيرة",
+    "recentSalesDescription": "أحدث خمس معاملات لك.",
+    "viewAll": "عرض الكل",
+    "recentSalesService": "الخدمة",
+    "recentSalesAmount": "المبلغ",
+    "lowStockItemsTitle": "العناصر ذات المخزون المنخفض",
+    "lowStockItemsDescription": "هذه العناصر على وشك النفاد وقد تحتاج إلى إعادة طلبها قريبًا.",
+    "lowStockItem": "العنصر",
+    "lowStockStatus": "الحالة",
+    "lowStockQuantity": "الكمية"
+  }
+}
