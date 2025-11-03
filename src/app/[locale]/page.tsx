@@ -23,7 +23,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Link, useRouter } from 'next-intl/client';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import type { CarWashSale, InventoryItem } from '@/types';
@@ -266,3 +267,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

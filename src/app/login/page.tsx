@@ -11,7 +11,8 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Link, useRouter } from 'next-intl/client';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useAuth, useUser, initiateEmailSignIn } from '@/firebase';
 
@@ -85,3 +86,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    

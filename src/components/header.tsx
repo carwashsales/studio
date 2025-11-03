@@ -1,7 +1,8 @@
 
 'use client';
 
-import { Link, usePathname, useRouter } from "next-intl/client";
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -120,3 +121,5 @@ export default function Header() {
     </header>
   );
 }
+
+    
