@@ -28,9 +28,9 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Settings } from 'lucide-react';
-import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, useUser } from '@/firebase';
-import { collection, orderBy, query } from 'firebase/firestore';
+import { MoreHorizontal, Settings, Trash } from 'lucide-react';
+import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, useUser, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, doc, orderBy, query } from 'firebase/firestore';
 import type { CarWashSale, Staff, Price as ServicePrice } from '@/types';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -38,6 +38,13 @@ import { useToast } from '@/components/ui/use-toast';
 import { CurrencySymbol } from '@/components/currency-symbol';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useFormatter } from 'next-intl';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type PaymentType = 'coupon' | 'cash' | 'machine' | 'not-paid';
 
@@ -175,6 +182,17 @@ export default function SalesPage() {
     toast({
       title: 'Sale Recorded',
       description: 'The new sale has been successfully added.',
+    });
+  };
+
+  const handleDeleteSale = (saleId: string, serviceName: string) => {
+    if (!firestore || !user) return;
+    const saleRef = doc(firestore, 'users', user.uid, 'sales', saleId);
+    deleteDocumentNonBlocking(saleRef);
+    toast({
+      variant: 'destructive',
+      title: 'Sale Deleted',
+      description: `The sale for "${serviceName}" has been deleted.`,
     });
   };
   
@@ -330,10 +348,11 @@ export default function SalesPage() {
                   <TableHead className="hidden sm:table-cell">Staff</TableHead>
                   <TableHead className="hidden md:table-cell">Date</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
+                  <TableHead><span className="sr-only">Actions</span></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {salesLoading && <TableRow><TableCell colSpan={4}>Loading...</TableCell></TableRow>}
+                {salesLoading && <TableRow><TableCell colSpan={5}>Loading...</TableCell></TableRow>}
                 {sales?.map((sale) => (
                   <TableRow key={sale.id}>
                     <TableCell className="font-medium">{sale.service}</TableCell>
@@ -341,6 +360,23 @@ export default function SalesPage() {
                     <TableCell className="hidden md:table-cell">{format(new Date(sale.date), 'Pp')}</TableCell>
                     <TableCell className="text-right flex justify-end items-center gap-1">
                       {formatNumber(sale.amount, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <CurrencySymbol />
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => handleDeleteSale(sale.id, sale.service)} className="text-destructive">
+                            <Trash className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -352,5 +388,3 @@ export default function SalesPage() {
     </div>
   );
 }
-
-    
