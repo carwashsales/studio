@@ -23,8 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useRouter, Link } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import type { CarWashSale, InventoryItem } from '@/types';
@@ -134,7 +133,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center gap-1">
-              {salesLoading ? '...' : formatNumber(totalRevenue, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {salesLoading ? '...' : formatNumber(totalRevenue, { style: 'currency', currency: 'SAR' }).replace('SAR', '').trim()}
               <CurrencySymbol />
             </div>
             <p className="text-xs text-muted-foreground">
@@ -219,7 +218,7 @@ export default function DashboardPage() {
                             </div>
                         </TableCell>
                         <TableCell className="text-right flex justify-end items-center gap-1">
-                            {formatNumber(sale.amount, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            {formatNumber(sale.amount, { style: 'currency', currency: 'SAR' }).replace('SAR', '').trim()}
                             <CurrencySymbol />
                         </TableCell>
                     </TableRow>
@@ -271,5 +270,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
