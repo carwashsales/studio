@@ -6,6 +6,7 @@ import {
   Package,
   Car,
   AlertTriangle,
+  SprayCan,
 } from 'lucide-react';
 import {
   Card,
@@ -87,15 +88,25 @@ export default function DashboardPage() {
   const { data: inventoryItems, isLoading: inventoryLoading } = useCollection<InventoryItem>(inventoryQuery);
   const { data: lowStockItems, isLoading: lowStockLoading } = useCollection<InventoryItem>(lowStockQuery);
 
-  const totalRevenue = React.useMemo(() => {
-    if (!sales) return 0;
-    return sales.reduce((acc, sale) => acc + sale.amount, 0);
+  const { totalRevenue, totalSales, otherServicesCount } = React.useMemo(() => {
+    if (!sales) return { totalRevenue: 0, totalSales: 0, otherServicesCount: 0 };
+    
+    let revenue = 0;
+    let mainSales = 0;
+    let otherSales = 0;
+
+    sales.forEach(sale => {
+      revenue += sale.amount;
+      if (sale.service === 'Full Wash' || sale.service === 'Outside Only') {
+        mainSales++;
+      } else {
+        otherSales++;
+      }
+    });
+
+    return { totalRevenue: revenue, totalSales: mainSales, otherServicesCount: otherSales };
   }, [sales]);
 
-  const totalSales = React.useMemo(() => {
-    if (!sales) return 0;
-    return sales.length;
-  }, [sales]);
   
   const totalInventory = React.useMemo(() => {
     if (!inventoryItems) return 0;
@@ -134,7 +145,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('totalRevenue')}</CardTitle>
@@ -160,7 +171,21 @@ export default function DashboardPage() {
               {salesLoading ? '...' : `+${formatNumber(totalSales)}`}
             </div>
             <p className="text-xs text-muted-foreground">
-              {t('totalSalesDescription')}
+              Number of Full & Outside Washes
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Other Services</CardTitle>
+            <SprayCan className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {salesLoading ? '...' : `+${formatNumber(otherServicesCount)}`}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Number of other services sold
             </p>
           </CardContent>
         </Card>
@@ -279,3 +304,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
