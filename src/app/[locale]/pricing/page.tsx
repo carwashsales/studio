@@ -46,6 +46,15 @@ const EditableCell = ({ value, onSave, isEditable = true }: { value: number; onS
     onSave(currentValue);
     setIsEditing(false);
   };
+  
+  const handleEditClick = () => {
+    if (isEditable) {
+        // When entering edit mode, set the value directly without formatting
+        setCurrentValue(value);
+        setIsEditing(true);
+    }
+  };
+
 
   if (isEditing) {
     return (
@@ -63,7 +72,7 @@ const EditableCell = ({ value, onSave, isEditable = true }: { value: number; onS
   }
 
   return (
-    <div onClick={() => isEditable && setIsEditing(true)} className={cn("flex items-center justify-end gap-1", {"cursor-pointer": isEditable})}>
+    <div onClick={handleEditClick} className={cn("flex items-center justify-end gap-1", {"cursor-pointer": isEditable})}>
       {formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <CurrencySymbol />
     </div>
   );
@@ -192,5 +201,3 @@ export default function PricingPage() {
     </Card>
   );
 }
-
-    

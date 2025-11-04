@@ -31,7 +31,7 @@ import { List, ListItem } from "@/components/ui/list";
 import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CurrencySymbol } from '@/components/currency-symbol';
-import { useFormatter } from "next-intl";
+import { useFormatter } from 'next-intl';
 
 type ReportType = 
     | "sales-by-date"
@@ -62,11 +62,6 @@ export default function ReportsPage() {
     from: startOfDay(new Date(new Date().setDate(1))),
     to: endOfDay(new Date()),
   });
-  
-  const valueFormatter = (number: number) => {
-    return formatNumber(number);
-  };
-
 
   const salesQuery = useMemoFirebase(() => {
     if (!firestore || !user || !dateRange?.from || !dateRange?.to) return null;
@@ -227,14 +222,15 @@ function SalesByServiceChart({ sales }: { sales: CarWashSale[] | null }) {
     
     const totalAmount = chartData.reduce((acc, item) => acc + item.value, 0);
 
-    const valueFormatter = (number: number) => `${formatNumber(number)}`;
+    const valueFormatter = (number: number) => {
+        return `${formatNumber(number)} SAR`;
+    };
     
     const renderCustomLabel = () => {
         return (
             <div className="flex flex-col items-center justify-center">
-                <span className="font-bold text-2xl flex items-center gap-1">
+                <span className="font-bold text-2xl">
                     {valueFormatter(totalAmount)}
-                    <CurrencySymbol />
                 </span>
                 <span className="text-muted-foreground text-sm">Total Sales</span>
             </div>
@@ -266,9 +262,8 @@ function SalesByServiceChart({ sales }: { sales: CarWashSale[] | null }) {
                               <p className="whitespace-nowrap text-tremor-content">
                                 {categoryPayload.name}
                               </p>
-                              <p className="whitespace-nowrap font-medium text-tremor-content-strong flex items-center gap-1">
+                              <p className="whitespace-nowrap font-medium text-tremor-content-strong">
                                 {valueFormatter(categoryPayload.value as number)}
-                                <CurrencySymbol />
                               </p>
                             </div>
                           </div>
@@ -281,9 +276,9 @@ function SalesByServiceChart({ sales }: { sales: CarWashSale[] | null }) {
                 {chartData.map(item => (
                     <li key={item.name} className="flex justify-between items-center">
                         <span>{item.name}</span>
-                        <span className="font-medium text-foreground flex items-center gap-1">
+                        <span className="font-medium text-foreground">
                             {formatNumber(((item.value / totalAmount) * 100), {maximumFractionDigits: 1})}% 
-                            ({valueFormatter(item.value)} <CurrencySymbol />)
+                            ({valueFormatter(item.value)})
                         </span>
                     </li>
                 ))}
@@ -308,9 +303,6 @@ function SalesByStaffChart({ sales }: { sales: CarWashSale[] | null }) {
     }, [sales]);
 
     if (chartData.length === 0) return <p>No sales data for this period.</p>;
-    
-    const valueFormatter = (number: number) => `${formatNumber(number)}`;
-
 
     return (
         <Table>
@@ -325,8 +317,8 @@ function SalesByStaffChart({ sales }: { sales: CarWashSale[] | null }) {
                 {chartData.map(item => (
                     <TableRow key={item.name}>
                         <TableCell className="font-medium">{item.name}</TableCell>
-                        <TableCell className="text-right flex justify-end items-center gap-1">{valueFormatter(item.sales)}<CurrencySymbol /></TableCell>
-                        <TableCell className="text-right flex justify-end items-center gap-1">{valueFormatter(item.commission)}<CurrencySymbol /></TableCell>
+                        <TableCell className="text-right flex justify-end items-center gap-1">{formatNumber(item.sales)}<CurrencySymbol /></TableCell>
+                        <TableCell className="text-right flex justify-end items-center gap-1">{formatNumber(item.commission)}<CurrencySymbol /></TableCell>
                     </TableRow>
                 ))}
             </TableBody>
@@ -345,9 +337,6 @@ function ProfitLossReport({ sales, orders }: { sales: CarWashSale[] | null, orde
         return { totalRevenue, totalCommission, totalOrderCost, totalExpenses, netProfit };
     }, [sales, orders]);
 
-    const valueFormatter = (number: number) => `${formatNumber(number)}`;
-
-
     return (
         <div className="space-y-4">
              <Card>
@@ -355,19 +344,19 @@ function ProfitLossReport({ sales, orders }: { sales: CarWashSale[] | null, orde
                 <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                     <div>
                         <p className="text-muted-foreground">Total Revenue</p>
-                        <p className="text-2xl font-bold flex items-center justify-center gap-1">{valueFormatter(reportData.totalRevenue)}<CurrencySymbol /></p>
+                        <p className="text-2xl font-bold flex items-center justify-center gap-1">{formatNumber(reportData.totalRevenue)}<CurrencySymbol /></p>
                     </div>
                     <div>
                         <p className="text-muted-foreground">Total Expenses</p>
-                        <p className="text-2xl font-bold text-destructive flex items-center justify-center gap-1">{valueFormatter(reportData.totalExpenses)}<CurrencySymbol /></p>
+                        <p className="text-2xl font-bold text-destructive flex items-center justify-center gap-1">{formatNumber(reportData.totalExpenses)}<CurrencySymbol /></p>
                     </div>
                      <div>
                         <p className="text-muted-foreground">Commissions Paid</p>
-                        <p className="text-lg font-bold flex items-center justify-center gap-1">{valueFormatter(reportData.totalCommission)}<CurrencySymbol /></p>
+                        <p className="text-lg font-bold flex items-center justify-center gap-1">{formatNumber(reportData.totalCommission)}<CurrencySymbol /></p>
                     </div>
                      <div>
                         <p className="text-muted-foreground">Net Profit</p>
-                        <p className="text-2xl font-bold text-green-600 flex items-center justify-center gap-1">{valueFormatter(reportData.netProfit)}<CurrencySymbol /></p>
+                        <p className="text-2xl font-bold text-green-600 flex items-center justify-center gap-1">{formatNumber(reportData.netProfit)}<CurrencySymbol /></p>
                     </div>
                 </CardContent>
             </Card>
@@ -382,7 +371,6 @@ function PurchasesByDateTable({ orders }: { orders: Order[] | null }) {
     if (receivedOrders.length === 0) return <p>No received orders for this period.</p>;
 
     const totalCost = receivedOrders.reduce((acc, order) => acc + order.total, 0);
-    const valueFormatter = (number: number) => `${formatNumber(number)}`;
 
     return (
         <Table>
@@ -398,14 +386,14 @@ function PurchasesByDateTable({ orders }: { orders: Order[] | null }) {
                     <TableRow key={order.id}>
                         <TableCell>{format(new Date(order.date), 'Pp')}</TableCell>
                         <TableCell>{order.supplier}</TableCell>
-                        <TableCell className="text-right flex justify-end items-center gap-1">{valueFormatter(order.total)}<CurrencySymbol /></TableCell>
+                        <TableCell className="text-right flex justify-end items-center gap-1">{formatNumber(order.total)}<CurrencySymbol /></TableCell>
                     </TableRow>
                 ))}
             </TableBody>
             <TableFooter>
                 <TableRow>
                     <TableCell colSpan={2} className="text-right font-bold">Total</TableCell>
-                    <TableCell className="text-right font-bold flex justify-end items-center gap-1">{valueFormatter(totalCost)}<CurrencySymbol /></TableCell>
+                    <TableCell className="text-right font-bold flex justify-end items-center gap-1">{formatNumber(totalCost)}<CurrencySymbol /></TableCell>
                 </TableRow>
             </TableFooter>
         </Table>
@@ -446,5 +434,3 @@ function InventoryTable({ inventory }: { inventory: InventoryItem[] | null }) {
         </Table>
     );
 }
-
-    
