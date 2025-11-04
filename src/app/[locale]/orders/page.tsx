@@ -49,6 +49,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { CurrencySymbol } from '@/components/currency-symbol';
+import { useFormatter } from 'next-intl';
 
 type StatusFilter = "all" | Order['status'];
 
@@ -74,6 +75,7 @@ function OrderDialog({ mode, order, children }: { mode: 'add' | 'edit', order?: 
   const { user } = useUser();
   const ordersCollection = useMemoFirebase(() => (firestore && user ? collection(firestore, 'users', user.uid, 'orders') : null), [firestore, user]);
   const { toast } = useToast();
+  const formatNumber = useFormatter().number;
 
   const [supplier, setSupplier] = React.useState(order?.supplier || '');
   const [total, setTotal] = React.useState(order?.total?.toString() || '');
@@ -162,6 +164,7 @@ export default function OrdersPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('all');
+  const formatNumber = useFormatter().number;
   
   React.useEffect(() => {
     if (!isUserLoading && !user) {
@@ -279,7 +282,7 @@ export default function OrdersPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end items-center gap-1">
-                    {order.total.toFixed(2)} <CurrencySymbol />
+                    {formatNumber(order.total, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <CurrencySymbol />
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
@@ -313,7 +316,7 @@ export default function OrdersPage() {
               <TableCell colSpan={5} className="text-right font-bold">Total Cost of Received Orders</TableCell>
               <TableCell className="text-right font-bold">
                 <div className="flex justify-end items-center gap-1">
-                  {totalReceived.toFixed(2)} <CurrencySymbol />
+                  {formatNumber(totalReceived, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <CurrencySymbol />
                 </div>
               </TableCell>
             </TableRow>
@@ -323,3 +326,5 @@ export default function OrdersPage() {
     </Card>
   );
 }
+
+    

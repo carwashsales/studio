@@ -30,11 +30,13 @@ import { Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { seedDefaultServices } from '@/lib/services';
 import { CurrencySymbol } from '@/components/currency-symbol';
+import { useFormatter } from 'next-intl';
 
 
 const EditableCell = ({ value, onSave, isEditable = true }: { value: number; onSave: (newValue: number) => void, isEditable?: boolean }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [currentValue, setCurrentValue] = React.useState(value);
+  const formatNumber = useFormatter().number;
 
   React.useEffect(() => {
     setCurrentValue(value);
@@ -62,7 +64,7 @@ const EditableCell = ({ value, onSave, isEditable = true }: { value: number; onS
 
   return (
     <div onClick={() => isEditable && setIsEditing(true)} className={cn("flex items-center justify-end gap-1", {"cursor-pointer": isEditable})}>
-      {value.toFixed(2)} <CurrencySymbol />
+      {formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <CurrencySymbol />
     </div>
   );
 };
@@ -190,3 +192,5 @@ export default function PricingPage() {
     </Card>
   );
 }
+
+    

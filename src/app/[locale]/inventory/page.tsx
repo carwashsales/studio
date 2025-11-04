@@ -45,6 +45,7 @@ import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
 import { CurrencySymbol } from '@/components/currency-symbol';
+import { useFormatter } from 'next-intl';
 
 type StatusFilter = "all" | "in-stock" | "low-stock" | "out-of-stock";
 
@@ -81,6 +82,7 @@ function ItemDialog({ mode, item, children }: { mode: 'add' | 'edit', item?: Inv
     [firestore, user]
   );
   const { toast } = useToast();
+  const formatNumber = useFormatter().number;
 
   const [name, setName] = React.useState(item?.name || '');
   const [category, setCategory] = React.useState(item?.category || '');
@@ -161,6 +163,7 @@ export default function InventoryPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>("all");
+  const formatNumber = useFormatter().number;
 
   React.useEffect(() => {
     if (!isUserLoading && !user) {
@@ -269,15 +272,15 @@ export default function InventoryPage() {
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{getStatusBadge(item.quantity)}</TableCell>
-                <TableCell className="text-right">{item.quantity}</TableCell>
+                <TableCell className="text-right">{formatNumber(item.quantity)}</TableCell>
                 <TableCell className="hidden md:table-cell text-right">
                   <div className="flex justify-end items-center gap-1">
-                    {(item.purchasePrice || 0).toFixed(2)} <CurrencySymbol />
+                    {formatNumber(item.purchasePrice || 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <CurrencySymbol />
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
                     <div className="flex justify-end items-center gap-1">
-                        {(item.quantity * (item.purchasePrice || 0)).toFixed(2)} <CurrencySymbol />
+                        {formatNumber(item.quantity * (item.purchasePrice || 0), { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <CurrencySymbol />
                     </div>
                 </TableCell>
                 <TableCell>
@@ -305,3 +308,5 @@ export default function InventoryPage() {
     </Card>
   );
 }
+
+    

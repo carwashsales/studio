@@ -31,6 +31,7 @@ import { List, ListItem } from "@/components/ui/list";
 import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CurrencySymbol } from '@/components/currency-symbol';
+import { useFormatter } from "next-intl";
 
 type ReportType = 
     | "sales-by-date"
@@ -54,6 +55,7 @@ export default function ReportsPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
+  const formatNumber = useFormatter().number;
 
   const [activeReport, setActiveReport] = React.useState<ReportType | null>(null);
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>({
@@ -62,7 +64,7 @@ export default function ReportsPage() {
   });
   
   const valueFormatter = (number: number) => {
-    return new Intl.NumberFormat("us").format(number).toString();
+    return formatNumber(number);
   };
 
 
@@ -182,6 +184,7 @@ export default function ReportsPage() {
 // -- Report Components --
 
 function SalesByDateTable({ sales }: { sales: CarWashSale[] | null }) {
+    const formatNumber = useFormatter().number;
     if (!sales || sales.length === 0) return <p>No sales data for this period.</p>;
     return (
         <Table>
@@ -201,7 +204,7 @@ function SalesByDateTable({ sales }: { sales: CarWashSale[] | null }) {
                         <TableCell>{sale.service}</TableCell>
                         <TableCell>{sale.staffName}</TableCell>
                         <TableCell className="capitalize">{sale.paymentMethod?.replace('-',' ')}</TableCell>
-                        <TableCell className="text-right flex justify-end items-center gap-1">{sale.amount.toFixed(2)} <CurrencySymbol /></TableCell>
+                        <TableCell className="text-right flex justify-end items-center gap-1">{formatNumber(sale.amount, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <CurrencySymbol /></TableCell>
                     </TableRow>
                 ))}
             </TableBody>
@@ -210,6 +213,7 @@ function SalesByDateTable({ sales }: { sales: CarWashSale[] | null }) {
 }
 
 function SalesByServiceChart({ sales }: { sales: CarWashSale[] | null }) {
+    const formatNumber = useFormatter().number;
     const chartData = React.useMemo(() => {
         if (!sales) return [];
         const serviceSales: { [key: string]: number } = {};
@@ -223,14 +227,14 @@ function SalesByServiceChart({ sales }: { sales: CarWashSale[] | null }) {
     
     const totalAmount = chartData.reduce((acc, item) => acc + item.value, 0);
 
-    const valueFormatter = (number: number) => `${new Intl.NumberFormat("us").format(number).toString()}`;
+    const valueFormatter = (number: number) => `${formatNumber(number)}`;
     
     const renderCustomLabel = () => {
         return (
             <div className="flex flex-col items-center justify-center">
                 <span className="font-bold text-2xl flex items-center gap-1">
                     {valueFormatter(totalAmount)}
-                    SAR
+                    <CurrencySymbol />
                 </span>
                 <span className="text-muted-foreground text-sm">Total Sales</span>
             </div>
@@ -264,7 +268,7 @@ function SalesByServiceChart({ sales }: { sales: CarWashSale[] | null }) {
                               </p>
                               <p className="whitespace-nowrap font-medium text-tremor-content-strong flex items-center gap-1">
                                 {valueFormatter(categoryPayload.value as number)}
-                                SAR
+                                <CurrencySymbol />
                               </p>
                             </div>
                           </div>
@@ -278,8 +282,8 @@ function SalesByServiceChart({ sales }: { sales: CarWashSale[] | null }) {
                     <li key={item.name} className="flex justify-between items-center">
                         <span>{item.name}</span>
                         <span className="font-medium text-foreground flex items-center gap-1">
-                            {((item.value / totalAmount) * 100).toFixed(1)}% 
-                            ({valueFormatter(item.value)} SAR)
+                            {formatNumber(((item.value / totalAmount) * 100), {maximumFractionDigits: 1})}% 
+                            ({valueFormatter(item.value)} <CurrencySymbol />)
                         </span>
                     </li>
                 ))}
@@ -289,6 +293,7 @@ function SalesByServiceChart({ sales }: { sales: CarWashSale[] | null }) {
 }
 
 function SalesByStaffChart({ sales }: { sales: CarWashSale[] | null }) {
+    const formatNumber = useFormatter().number;
     const chartData = React.useMemo(() => {
         if (!sales) return [];
         const staffSales: { [key: string]: { sales: number; commission: number } } = {};
@@ -304,7 +309,7 @@ function SalesByStaffChart({ sales }: { sales: CarWashSale[] | null }) {
 
     if (chartData.length === 0) return <p>No sales data for this period.</p>;
     
-    const valueFormatter = (number: number) => `${new Intl.NumberFormat("us").format(number).toString()}`;
+    const valueFormatter = (number: number) => `${formatNumber(number)}`;
 
 
     return (
@@ -330,6 +335,7 @@ function SalesByStaffChart({ sales }: { sales: CarWashSale[] | null }) {
 }
 
 function ProfitLossReport({ sales, orders }: { sales: CarWashSale[] | null, orders: Order[] | null }) {
+    const formatNumber = useFormatter().number;
     const reportData = React.useMemo(() => {
         const totalRevenue = sales?.reduce((acc, sale) => acc + sale.amount, 0) || 0;
         const totalCommission = sales?.reduce((acc, sale) => acc + sale.commission, 0) || 0;
@@ -339,7 +345,7 @@ function ProfitLossReport({ sales, orders }: { sales: CarWashSale[] | null, orde
         return { totalRevenue, totalCommission, totalOrderCost, totalExpenses, netProfit };
     }, [sales, orders]);
 
-    const valueFormatter = (number: number) => `${new Intl.NumberFormat("us").format(number).toString()}`;
+    const valueFormatter = (number: number) => `${formatNumber(number)}`;
 
 
     return (
@@ -371,11 +377,12 @@ function ProfitLossReport({ sales, orders }: { sales: CarWashSale[] | null, orde
 }
 
 function PurchasesByDateTable({ orders }: { orders: Order[] | null }) {
+    const formatNumber = useFormatter().number;
     const receivedOrders = React.useMemo(() => orders?.filter(o => o.status === 'Received') || [], [orders]);
     if (receivedOrders.length === 0) return <p>No received orders for this period.</p>;
 
     const totalCost = receivedOrders.reduce((acc, order) => acc + order.total, 0);
-    const valueFormatter = (number: number) => `${new Intl.NumberFormat("us").format(number).toString()}`;
+    const valueFormatter = (number: number) => `${formatNumber(number)}`;
 
     return (
         <Table>
@@ -407,6 +414,7 @@ function PurchasesByDateTable({ orders }: { orders: Order[] | null }) {
 
 
 function InventoryTable({ inventory }: { inventory: InventoryItem[] | null }) {
+    const formatNumber = useFormatter().number;
     if (!inventory) return <p>No inventory data available.</p>;
 
     const getStatusBadge = (quantity: number) => {
@@ -431,10 +439,12 @@ function InventoryTable({ inventory }: { inventory: InventoryItem[] | null }) {
                         <TableCell className="font-medium">{item.name}</TableCell>
                         <TableCell>{item.category}</TableCell>
                         <TableCell>{getStatusBadge(item.quantity)}</TableCell>
-                        <TableCell className="text-right">{item.quantity}</TableCell>
+                        <TableCell className="text-right">{formatNumber(item.quantity)}</TableCell>
                     </TableRow>
                 ))}
             </TableBody>
         </Table>
     );
 }
+
+    

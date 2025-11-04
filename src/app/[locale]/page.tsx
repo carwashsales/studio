@@ -32,12 +32,13 @@ import { collection, query, orderBy, limit, where } from 'firebase/firestore';
 import * as React from 'react';
 import { format } from 'date-fns';
 import { CurrencySymbol } from '@/components/currency-symbol';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useFormatter } from 'next-intl';
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const t = useTranslations('DashboardPage');
+  const formatNumber = useFormatter().number;
   const firestore = useFirestore();
 
   React.useEffect(() => {
@@ -133,7 +134,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center gap-1">
-              {salesLoading ? '...' : totalRevenue.toFixed(2)}
+              {salesLoading ? '...' : formatNumber(totalRevenue, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               <CurrencySymbol />
             </div>
             <p className="text-xs text-muted-foreground">
@@ -148,7 +149,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {salesLoading ? '...' : `+${totalSales}`}
+              {salesLoading ? '...' : `+${formatNumber(totalSales)}`}
             </div>
             <p className="text-xs text-muted-foreground">
               {t('totalSalesDescription')}
@@ -163,7 +164,7 @@ export default function DashboardPage() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{inventoryLoading ? '...' : totalInventory}</div>
+            <div className="text-2xl font-bold">{inventoryLoading ? '...' : formatNumber(totalInventory)}</div>
             <p className="text-xs text-muted-foreground">
               {t('totalInventoryDescription')}
             </p>
@@ -175,7 +176,7 @@ export default function DashboardPage() {
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{lowStockLoading ? '...' : lowStockItems?.length || 0}</div>
+            <div className="text-2xl font-bold">{lowStockLoading ? '...' : formatNumber(lowStockItems?.length || 0)}</div>
             <p className="text-xs text-muted-foreground">
               {t('lowStockAlertsDescription')}
             </p>
@@ -217,7 +218,10 @@ export default function DashboardPage() {
                                 by {sale.staffName} on {format(new Date(sale.date), "PPP")}
                             </div>
                         </TableCell>
-                        <TableCell className="text-right flex justify-end items-center gap-1">{sale.amount.toFixed(2)}<CurrencySymbol /></TableCell>
+                        <TableCell className="text-right flex justify-end items-center gap-1">
+                            {formatNumber(sale.amount, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            <CurrencySymbol />
+                        </TableCell>
                     </TableRow>
                 ))}
               </TableBody>
@@ -256,7 +260,7 @@ export default function DashboardPage() {
                                     <div className="font-medium">{item.name}</div>
                                 </TableCell>
                                 <TableCell>{getStatusBadge(item.quantity)}</TableCell>
-                                <TableCell className="text-right">{item.quantity}</TableCell>
+                                <TableCell className="text-right">{formatNumber(item.quantity)}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -267,3 +271,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

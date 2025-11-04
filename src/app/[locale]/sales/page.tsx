@@ -37,6 +37,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
 import { CurrencySymbol } from '@/components/currency-symbol';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useFormatter } from 'next-intl';
 
 type PaymentType = 'coupon' | 'cash' | 'machine' | 'not-paid';
 
@@ -45,6 +46,7 @@ export default function SalesPage() {
   const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const formatNumber = useFormatter().number;
 
   // Form State
   const [serviceId, setServiceId] = React.useState('');
@@ -253,14 +255,14 @@ export default function SalesPage() {
                 <div className="grid gap-2 w-1/2">
                   <Label htmlFor="price">Price</Label>
                   <div className="relative flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm">
-                    <span className="font-mono">{paymentType === 'not-paid' ? '0.00' : price}</span>
+                    <span className="font-mono">{paymentType === 'not-paid' ? formatNumber(0, {minimumFractionDigits: 2}) : formatNumber(Number(price), {minimumFractionDigits: 2})}</span>
                     <span className="ml-auto"><CurrencySymbol /></span>
                   </div>
                 </div>
                 <div className="grid gap-2 w-1/2">
                    <Label htmlFor="commission">Commission</Label>
                    <div className="relative flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm">
-                    <span className="font-mono">{commission}</span>
+                    <span className="font-mono">{formatNumber(Number(commission), {minimumFractionDigits: 2})}</span>
                     <span className="ml-auto"><CurrencySymbol /></span>
                   </div>
                 </div>
@@ -269,7 +271,7 @@ export default function SalesPage() {
               {showWaxOption && waxService && (
                 <div className="flex items-center space-x-2 pt-2">
                   <Checkbox id="wax-add-on" checked={waxAddOn} onCheckedChange={(c) => setWaxAddOn(!!c)} disabled={noStaff} />
-                  <Label htmlFor="wax-add-on" className="cursor-pointer flex items-center gap-1">Wax Add-on (+{waxService.prices['default']?.price || 0} <CurrencySymbol />)</Label>
+                  <Label htmlFor="wax-add-on" className="cursor-pointer flex items-center gap-1">Wax Add-on (+{formatNumber(waxService.prices['default']?.price || 0)} <CurrencySymbol />)</Label>
                 </div>
               )}
 
@@ -338,7 +340,7 @@ export default function SalesPage() {
                     <TableCell className="hidden sm:table-cell">{sale.staffName}</TableCell>
                     <TableCell className="hidden md:table-cell">{format(new Date(sale.date), 'Pp')}</TableCell>
                     <TableCell className="text-right flex justify-end items-center gap-1">
-                      {sale.amount.toFixed(2)} <CurrencySymbol />
+                      {formatNumber(sale.amount, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <CurrencySymbol />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -350,3 +352,5 @@ export default function SalesPage() {
     </div>
   );
 }
+
+    
