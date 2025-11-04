@@ -108,6 +108,14 @@ function ItemDialog({ mode, item, children }: { mode: 'add' | 'edit', item?: Inv
   }, [open, item, mode]);
 
   const handleSubmit = () => {
+    if (!name.trim()) {
+        toast({
+            variant: "destructive",
+            title: "Missing Name",
+            description: "Please enter a name for the inventory item.",
+        });
+        return;
+    }
     if (!firestore || !user) return;
     if (mode === 'add') {
         if (!inventoryCollection) return;
