@@ -1,4 +1,3 @@
-
 'use client';
 import {
   ArrowUpRight,
@@ -6,7 +5,6 @@ import {
   Package,
   Car,
   AlertTriangle,
-  SprayCan,
 } from 'lucide-react';
 import {
   Card,
@@ -24,7 +22,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import type { CarWashSale, InventoryItem } from '@/types';
@@ -34,6 +31,7 @@ import { format } from 'date-fns';
 import { CurrencySymbol } from '@/components/currency-symbol';
 import { useTranslations, useFormatter } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { getSalesPeriod } from '@/lib/utils';
 
 export default function DashboardPage() {
@@ -88,23 +86,26 @@ export default function DashboardPage() {
   const { data: inventoryItems, isLoading: inventoryLoading } = useCollection<InventoryItem>(inventoryQuery);
   const { data: lowStockItems, isLoading: lowStockLoading } = useCollection<InventoryItem>(lowStockQuery);
 
-  const { totalRevenue, totalSales, otherServicesCount } = React.useMemo(() => {
-    if (!sales) return { totalRevenue: 0, totalSales: 0, otherServicesCount: 0 };
+  const { totalRevenue, fullWashCount, outsideOnlyCount, otherServicesCount } = React.useMemo(() => {
+    if (!sales) return { totalRevenue: 0, fullWashCount: 0, outsideOnlyCount: 0, otherServicesCount: 0 };
     
     let revenue = 0;
-    let mainSales = 0;
+    let fullWashes = 0;
+    let outsideWashes = 0;
     let otherSales = 0;
 
     sales.forEach(sale => {
       revenue += sale.amount;
-      if (sale.service === 'Full Wash' || sale.service === 'Outside Only') {
-        mainSales++;
+      if (sale.service === 'Full Wash') {
+        fullWashes++;
+      } else if (sale.service === 'Outside Only') {
+        outsideWashes++;
       } else {
         otherSales++;
       }
     });
 
-    return { totalRevenue: revenue, totalSales: mainSales, otherServicesCount: otherSales };
+    return { totalRevenue: revenue, fullWashCount: fullWashes, outsideOnlyCount: outsideWashes, otherServicesCount: otherSales };
   }, [sales]);
 
   
@@ -145,7 +146,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('totalRevenue')}</CardTitle>
@@ -161,34 +162,33 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('totalSales')}</CardTitle>
-            <Car className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {salesLoading ? '...' : `+${formatNumber(totalSales)}`}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Number of Full & Outside Washes
-            </p>
-          </CardContent>
+        
+        <Card className="lg:col-span-1">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('todaysSales')}</CardTitle>
+                <Car className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">{t('fullWash')}:</span>
+                        <span className="text-xl font-bold">{salesLoading ? '...' : formatNumber(fullWashCount)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">{t('outsideOnly')}:</span>
+                        <span className="text-xl font-bold">{salesLoading ? '...' : formatNumber(outsideOnlyCount)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">{t('otherServices')}:</span>
+                        <span className="text-xl font-bold">{salesLoading ? '...' : formatNumber(otherServicesCount)}</span>
+                    </div>
+                </div>
+                 <p className="text-xs text-muted-foreground pt-2">
+                    {t('carsWashedRange')}
+                </p>
+            </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Other Services</CardTitle>
-            <SprayCan className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {salesLoading ? '...' : `+${formatNumber(otherServicesCount)}`}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Number of other services sold
-            </p>
-          </CardContent>
-        </Card>
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -304,5 +304,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
