@@ -23,7 +23,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -33,6 +32,8 @@ import * as React from 'react';
 import { format } from 'date-fns';
 import { CurrencySymbol } from '@/components/currency-symbol';
 import { useTranslations, useFormatter } from 'next-intl';
+import { useRouter } from 'next/navigation';
+import { getSalesPeriod } from '@/lib/utils';
 
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -40,6 +41,8 @@ export default function DashboardPage() {
   const t = useTranslations('DashboardPage');
   const formatNumber = useFormatter().number;
   const firestore = useFirestore();
+  
+  const salesPeriod = React.useMemo(() => getSalesPeriod(), []);
 
   React.useEffect(() => {
     if (!isUserLoading && !user) {
@@ -50,9 +53,14 @@ export default function DashboardPage() {
   const salesQuery = useMemoFirebase(
     () =>
       firestore && user
-        ? query(collection(firestore, 'users', user.uid, 'sales'), orderBy('date', 'desc'))
+        ? query(
+            collection(firestore, 'users', user.uid, 'sales'), 
+            where('date', '>=', salesPeriod.start.toISOString()),
+            where('date', '<', salesPeriod.end.toISOString()),
+            orderBy('date', 'desc')
+          )
         : null,
-    [firestore, user]
+    [firestore, user, salesPeriod]
   );
   
   const recentSalesQuery = useMemoFirebase(

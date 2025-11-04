@@ -1,9 +1,10 @@
-import { type ClassValue, clsx } from "clsx"
+import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
 
 export function getSalesPeriod() {
   const now = new Date();
@@ -25,12 +26,13 @@ export function getSalesPeriod() {
 
   } else {
     // It's after 3 AM.
+    // If it's before 7 AM, we still show the previous day's cycle which ended at 3 AM.
+    // If it's after 7 AM, we start the new day's cycle.
     const today = new Date(now);
     const tomorrow = new Date(now);
     tomorrow.setDate(now.getDate() + 1);
 
     if (currentHour < 7) {
-        // Between 3 AM and 7 AM, still show yesterday's cycle.
         const yesterday = new Date(now);
         yesterday.setDate(now.getDate() - 1);
         start = new Date(yesterday);
@@ -39,7 +41,6 @@ export function getSalesPeriod() {
         end = new Date(today);
         end.setHours(3, 0, 0, 0);
     } else {
-        // After 7 AM, start the new day's cycle.
         start = new Date(today);
         start.setHours(7, 0, 0, 0);
 
