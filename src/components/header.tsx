@@ -31,10 +31,10 @@ function LanguageSwitcher() {
     const locale = useLocale();
 
     const switchLocale = (newLocale: string) => {
-        // This will replace the current path with the new locale
-        // e.g., /en/dashboard -> /ar/dashboard
-        const newPath = `/${newLocale}${pathname}`;
-        router.replace(newPath);
+        // This will switch the locale by reloading the page with the new locale in the URL.
+        // For a smoother transition, you might need a more advanced setup.
+        const newPath = pathname.startsWith(`/${locale}`) ? pathname.replace(`/${locale}`, `/${newLocale}`) : `/${newLocale}${pathname}`;
+        router.push(newPath);
     };
 
     return (

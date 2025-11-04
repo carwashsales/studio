@@ -23,7 +23,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { useRouter, Link } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import type { CarWashSale, InventoryItem } from '@/types';
